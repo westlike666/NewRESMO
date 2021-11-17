@@ -229,7 +229,7 @@ function dy=eqrateode(t,y)
         D_V=0;%*4/3*pi*( D_RX.*RY.*RZ+RX.*D_RY.*RZ+RX.*RY.*D_RZ - ( [0; D_RX(1:end-1)].*[0; RY(1:end-1)].*[0; RZ(1:end-1)]+[0; RX(1:end-1)].*[0; D_RY(1:end-1)].*[0; RZ(1:end-1)]+[0; RX(1:end-1)].*[0; RY(1:end-1)].*[0; D_RZ(1:end-1)] ));
        
      else
-        dux=mean((-kBm*T*(diff_rho./eden(1:end-1))./diff_rx)./RX(2:end));
+        dux=mean((-kBm*T*(diff_rho./eden(1:end-1))./diff_rx)./RX(2:end)); % eqiuation (14) Rafeal's paper
         duy=mean((-kBm*T*(diff_rho./eden(1:end-1))./diff_ry)./RY(2:end));
         duz=mean((-kBm*T*(diff_rho./eden(1:end-1))./diff_rz)./RZ(2:end)); 
 
