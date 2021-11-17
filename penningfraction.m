@@ -12,7 +12,7 @@
 
 function [PenningFraction eden rden]=penningfraction(n,den)     % den in 10^12 pcc
 
-    a0=5.2917721092e-9;     % bohr radius in cm
+    a0=5.2917721092e-5;     % bohr radius in um
     Rn0=n.^2*a0;            % radius of Rydb. atom by bohr model using semi-classical method
     Rmax=1.8*(Rn0.*2);       % Robicheaux paper, within this distance, 90% penning ionize (~10ns)
 
