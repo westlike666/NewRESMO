@@ -40,22 +40,22 @@ firstn=1;
 n_min=10;
 numlev=100;                         % this is the number of n levels initially considered
 deac=0;                             % start with all Rydberg states
-nl=(firstn:firstn+numlev-1)';       % array of accessible n levels
+nl=(firstn:firstn+numlev-1)';       % array of accessible n levels, from 1 to 100
 
 ns=length(nl);                      %number of n-states
 
-NL=zeros(ns,N);
+NL=zeros(ns,N);                     %matrix of shells per n level
 
 DEN0=zeros(ns,N);
 NDEN=NL*0;
-EDEN=zeros(N,1);
-DEAC=zeros(N,1);
-DEAC_DR=zeros(N,1);
-DEAC_PD=zeros(ns,N);
+EDEN=zeros(N,1);                    %electron densities at each shell
+DEAC=zeros(N,1);                    
+DEAC_DR=zeros(N,1);                 % N + O from NO^+ + e^- at each shell 
+DEAC_PD=zeros(ns,N);                % N + O from NO^* of each accessible level at each shell 
 DEAC_N_MIN=zeros(n_min,N);
-T_PENNING=zeros(1,N);
+T_PENNING=zeros(1,N);               %temperature at each shell after penning ionization
 
-ux=zeros(size(rx));
+ux=zeros(size(rx));                 
 uz=zeros(size(rx));
 uy=zeros(size(rx));
 
@@ -120,13 +120,13 @@ N0=n0*ones(1,N);
  NDEN(nl==n0,:)=rDen;             % set n0 to rden
  EDEN=eDen';
  
- T_PENNING=(-Ry*den0./n0^2 + Ry*rDen./n0^2 + Ry*sum(NDEN(ind,:)./nl(ind).^2)).*1./(3/2*kB.*eDen); % by energy conservation
+ T_PENNING=(-Ry*den0./n0^2 + Ry*rDen./n0^2 + Ry*sum(NDEN(ind,:)./nl(ind).^2)).*1./(3/2*kB.*eDen); % by energy conservation, initial  is zero 
  
  DEAC=sum(NDEN(1:n_min,:))';       % allow n<=n_min to decay
  D_DEAC_N_MIN=NDEN(1:n_min,:);
  NDEN(1:n_min,:)=0;
  NL=nl*ones(1,N);               % save values for this shell in arrays
- DEN0=ones(ns,1)*den0;
+ %DEN0=ones(ns,1)*den0;
  
 
 % DEN0
