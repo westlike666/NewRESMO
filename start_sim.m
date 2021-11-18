@@ -1,19 +1,20 @@
 %This part solves the rate equations and saves results in workspace
 for density=[0.001]
     tic
-    N=10;%number of shells
+    N=1;%number of shells
     t_max=200;
     %steps=100;
+    single=true;
 
 
     sigma_z=0.42*1000;%Gaussian width
-    sigma_y=0.42*1000;
+    sigma_y=0.42*1000;  
     sigma_x=1.00*1000;
 %     sigma_z=1*1000;%Gaussian width
 %     sigma_y=0.55*1000;
 %     sigma_x=0.70*1000;
 
-    n=49; %PQN
+    n=45; %PQN
     
    
     d_p=density; %peak density in um-3
@@ -27,7 +28,7 @@ for density=[0.001]
     pos_z=linspace(0.5*sigma_env*sigma_z/(N-0.5),sigma_env*sigma_z,N)';
     
     
-    d=arrayfun(@(z) d_p*exp(-(z^2)/(2*sigma_z^2)),pos);
+    d=arrayfun(@(z) d_p*exp(-(z^2)/(2*sigma_z^2)),pos); %Gaissian distribution of density
 
     foldername=['R_PQN_',num2str(n),'othertry'];
     mkdir(foldername);
@@ -35,7 +36,7 @@ for density=[0.001]
         num2str(sigma_x),'mm','_tfinal',num2str(t_max),'ns_',num2str(sigma_env),'sigmaenv'];
     
     %solve rate equations
-    [time,nden,eden,deac_n_min,deac_dr,deac_pd,Te,rx,ry,rz,vx,vy,vz,vol,y0]=shell_rate_eqn_sim(d, pos_x, pos_y, pos_z, n, t_max, false);
+    [time,nden,eden,deac_n_min,deac_dr,deac_pd,Te,rx,ry,rz,vx,vy,vz,vol,y0]=shell_rate_eqn_sim(d, pos_x, pos_y, pos_z, n, t_max, single);
     %save workspace
     save(strcat([filename, '.mat']))
     
