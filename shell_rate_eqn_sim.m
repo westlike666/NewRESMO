@@ -174,7 +174,7 @@ function dy=eqrateode(t,y)              %has to be a colume vector
     UY=y((2*ns+7)*N+2:(2*ns+8)*N+1);
     UZ=y((2*ns+8)*N+2:(2*ns+9)*N+1);
     
-    V= y((2*ns+9)*N+2:(2*ns+10)*N+1);   % total ellipsoid volume of each shell
+    V= y((2*ns+9)*N+2:(2*ns+10)*N+1);   % slice of volume between each shell
     
     deac_n_min= y((2*ns+10)*N+2:end);
       
@@ -199,8 +199,8 @@ function dy=eqrateode(t,y)              %has to be a colume vector
     D_DEAC_PD=zeros(ns,N);
     D_DEAC_N_MIN=zeros(n_min,N);
 
-    VOL=zeros(ns,N);
-    D_VOL=zeros(ns,N);
+    %VOL=zeros(ns,N);
+    %D_VOL=zeros(ns,N);
     
     k_n_np=knnp(ni,nf,II,minn,maxn,diffsn,T);   % nl * nl matrix
     kion_one=kION(nl,T); % scaler 
@@ -217,17 +217,17 @@ function dy=eqrateode(t,y)              %has to be a colume vector
      diff_rz=diff(RZ',1,2)';
     
      if single
-        dux=0;%*mean((-kBm*T*(diff_rho./eden(1:end-1))./diff_rx)./RX(2:end));
-        duy=0;%*mean((-kBm*T*(diff_rho./eden(1:end-1))./diff_ry)./RY(2:end));
-        duz=0;%*mean((-kBm*T*(diff_rho./eden(1:end-1))./diff_rz)./RZ(2:end));
+        dux=zeros(N,1);%*mean((-kBm*T*(diff_rho./eden(1:end-1))./diff_rx)./RX(2:end));
+        duy=zeros(N,1);%*mean((-kBm*T*(diff_rho./eden(1:end-1))./diff_ry)./RY(2:end));
+        duz=zeros(N,1);%*mean((-kBm*T*(diff_rho./eden(1:end-1))./diff_rz)./RZ(2:end));
       
 
-        D_UX= 0;%*dux*RX; %% added 4 zeros
-        D_UY= 0;%*duy*RY;
-        D_UZ= 0;%*duz*RZ;
+        D_UX= zeros(N,1);%*dux*RX; %% added 4 zeros
+        D_UY= zeros(N,1);%*duy*RY;
+        D_UZ= zeros(N,1);%*duz*RZ;
       
 
-        D_V=0;%*4/3*pi*( D_RX.*RY.*RZ+RX.*D_RY.*RZ+RX.*RY.*D_RZ - ( [0; D_RX(1:end-1)].*[0; RY(1:end-1)].*[0; RZ(1:end-1)]+[0; RX(1:end-1)].*[0; D_RY(1:end-1)].*[0; RZ(1:end-1)]+[0; RX(1:end-1)].*[0; RY(1:end-1)].*[0; D_RZ(1:end-1)] ));
+        D_V=zeros(N,1);%*4/3*pi*( D_RX.*RY.*RZ+RX.*D_RY.*RZ+RX.*RY.*D_RZ - ( [0; D_RX(1:end-1)].*[0; RY(1:end-1)].*[0; RZ(1:end-1)]+[0; RX(1:end-1)].*[0; D_RY(1:end-1)].*[0; RZ(1:end-1)]+[0; RX(1:end-1)].*[0; RY(1:end-1)].*[0; D_RZ(1:end-1)] ));
        
      else
         dux=mean((-kBm*T*(diff_rho./eden(1:end-1))./diff_rx)./RX(2:end)); % eqiuation (14) Rafeal's paper
@@ -239,7 +239,7 @@ function dy=eqrateode(t,y)              %has to be a colume vector
         D_UY= duy*RY;
         D_UZ= duz*RZ;
 
-        D_V=4/3*pi*( D_RX.*RY.*RZ+RX.*D_RY.*RZ+RX.*RY.*D_RZ - ( [0; D_RX(1:end-1)].*[0; RY(1:end-1)].*[0; RZ(1:end-1)]+[0; RX(1:end-1)].*[0; D_RY(1:end-1)].*[0; RZ(1:end-1)]+[0; RX(1:end-1)].*[0; RY(1:end-1)].*[0; D_RZ(1:end-1)] ));
+        D_V=4/3*pi*( D_RX.*RY.*RZ+RX.*D_RY.*RZ+RX.*RY.*D_RZ - ( [0; D_RX(1:end-1)].*[0; RY(1:end-1)].*[0; RZ(1:end-1)]+[0; RX(1:end-1)].*[0; D_RY(1:end-1)].*[0; RZ(1:end-1)]+[0; RX(1:end-1)].*[0; RY(1:end-1)].*[0; D_RZ(1:end-1)] ))
      end
      
    for r=1:N %loop through all shells
