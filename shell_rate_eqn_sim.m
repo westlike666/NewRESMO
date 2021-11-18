@@ -113,18 +113,19 @@ N0=n0*ones(1,N);
 
  f=@(x)5.95*x.^5;                % This is the penning fraction distribution
  np=firstn:fix(n0/sqrt(2));      % Array of n states allowed after Penn ion
- nDen=nl*0;                      % This is the distribution of penning fraction
+ nDen=nl*0;                      % This is the distribution of penning fraction of penning partner (Rydberg molecules) 
  ind=1:length(np); 
  nDen(ind)=f(np/n0)/sum(f(np/n0));% dividing by the sum normalizes the function
- NDEN=nDen*eDen;
- NDEN(nl==n0,:)=rDen;             % set n0 to rden
+ NDEN=nDen*eDen;                  % eDen is equal to the number of the remaining penning partner
+ NDEN(nl==n0,:)=rDen;             % set n0 to rden which is the remaining Rydberg molecules in state n0
  EDEN=eDen';
  
- T_PENNING=(-Ry*den0./n0^2 + Ry*rDen./n0^2 + Ry*sum(NDEN(ind,:)./nl(ind).^2)).*1./(3/2*kB.*eDen); % by energy conservation, initial  is zero 
+ T_PENNING=(-Ry*den0./n0^2 + Ry*rDen./n0^2 + Ry*sum(NDEN(ind,:)./nl(ind).^2)).*1./(3/2*kB.*eDen); % by energy conservation, initial before penning is zero 
  
- DEAC=sum(NDEN(1:n_min,:))';       % allow n<=n_min to decay
- D_DEAC_N_MIN=NDEN(1:n_min,:);
- NDEN(1:n_min,:)=0;
+ %DEAC=sum(NDEN(1:n_min,:))';       
+ D_DEAC_N_MIN=NDEN(1:n_min,:);     % allow n<=n_min to decay, contributes to initial N + O from each n<=n_min on each shell     
+ DEAC=sum(D_DEAC_N_MIN)';          % allow n<=n_min to decay, contributes to initial total N + O of each shell 
+ NDEN(1:n_min,:)=0;   
  NL=nl*ones(1,N);               % save values for this shell in arrays
  %DEN0=ones(ns,1)*den0;
  
@@ -154,39 +155,39 @@ ncrit=@(T)round(sqrt(Ry/(kB*T)));  % to calculate n-max (got by fitting)
 [ni,nf,II,minn,maxn,diffsn]=buildns(nl);   % is needed to calculate the rate coeffs
 
 
-function dy=eqrateode(t,y)
+function dy=eqrateode(t,y)              %has to be a colume vector 
     
     
     % Select valiables
-    nden=y(1:ns*N);                     % pick out density over distribution of n
-    eden=y(ns*N+1:(ns+1)*N);            % pick out electron density
+    nden=y(1:ns*N);                     % pick out Rydberg molecule density over distribution of n
+    eden=y(ns*N+1:(ns+1)*N);            % pick out electron density at each shell
     deac=y((ns+1)*N+1:(ns+2)*N);        % pick out density of radiatively decayed atoms
-    deac_dr=y((ns+2)*N+1:(ns+3)*N);     % dissociative recombination
-    deac_pd=y((ns+3)*N+1:(2*ns+3)*N);   % predissociation
+    deac_dr=y((ns+2)*N+1:(ns+3)*N);     %       ...           dissociative recombination 
+    deac_pd=y((ns+3)*N+1:(2*ns+3)*N);   %       ...           predissociation
     T=y((2*ns+3)*N+1);                  % temperature
     
-    RX=y((2*ns+3)*N+2:(2*ns+4)*N+1);
+    RX=y((2*ns+3)*N+2:(2*ns+4)*N+1);    % x radius of each shell
     RY=y((2*ns+4)*N+2:(2*ns+5)*N+1);
     RZ=y((2*ns+5)*N+2:(2*ns+6)*N+1);
     
-    UX=y((2*ns+6)*N+2:(2*ns+7)*N+1);
+    UX=y((2*ns+6)*N+2:(2*ns+7)*N+1);    % x velocity of each shell
     UY=y((2*ns+7)*N+2:(2*ns+8)*N+1);
     UZ=y((2*ns+8)*N+2:(2*ns+9)*N+1);
     
-    V= y((2*ns+9)*N+2:(2*ns+10)*N+1);
+    V= y((2*ns+9)*N+2:(2*ns+10)*N+1);   % total ellipsoid volume of each shell
     
     deac_n_min= y((2*ns+10)*N+2:end);
       
     nc=ncrit(T);            % calculates n max with this temperature    
 %     Adjusts max allowed n: 
     if nc>=nl(1) && nc<nl(end) 
-        index=find(nl==ncrit(T));
+        index=find(nl==ncrit(T));  %index of max allowed n
     elseif nc<nl(1) 
         index=1;
     else
         index=numlev;
     end
-%     index=numlev; %deactive thermal criterion
+     index=numlev; %deactive thermal criterion
    
     %preallocate arrays for all shells
     D_NDEN=zeros(ns,N);
@@ -201,9 +202,9 @@ function dy=eqrateode(t,y)
     VOL=zeros(ns,N);
     D_VOL=zeros(ns,N);
     
-    k_n_np=knnp(ni,nf,II,minn,maxn,diffsn,T); 
-    kion_one=kION(nl,T);
-    k_tbr_one=kTBR(nl(1:index),T);
+    k_n_np=knnp(ni,nf,II,minn,maxn,diffsn,T);   % nl * nl matrix
+    kion_one=kION(nl,T); % scaler 
+    k_tbr_one=kTBR(nl(1:index),T); %scaler
     
     
     D_RX=UX;
@@ -311,7 +312,7 @@ function dy=eqrateode(t,y)
     
     %now calculate change in equilibrated temperature, use old D_NDEN_OLD
     %value to ensure deactivated states do not affect temperature
-
+    %I guess here a quasi-equalibrium is assumend where dV=0 
     dT=(Ry*sum(sum(D_NDEN_OLD./NL.^2.*VOL))-1.5*kB*T*sum(sum(D_EDEN_OLD.*V)) ...
         -sum(sum(0.98263e-20*V.*eden.*(UX.*D_UX + UY.*D_UY + UZ.*D_UZ)))/3  )...
         /(1.5*kB*sum(sum(eden.*V)));
