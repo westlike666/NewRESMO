@@ -1,8 +1,8 @@
 %This part solves the rate equations and saves results in workspace
 for density=[0.001]
     tic
-    N=10;%number of shells
-    t_max=200;
+    N=5;%number of shells
+    t_max=100;
     %steps=100;
     single=true; % single means fixed volume all the time does not expand(dV=0 and is not coupled in to rate equatins)
 
