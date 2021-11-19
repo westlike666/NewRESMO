@@ -203,8 +203,8 @@ function dy=eqrateode(t,y)              %has to be a colume vector
     %D_VOL=zeros(ns,N);
     
     k_n_np=knnp(ni,nf,II,minn,maxn,diffsn,T);   % nl * nl matrix
-    kion_one=kION(nl,T); % scaler 
-    k_tbr_one=kTBR(nl(1:index),T); %scaler
+    kion_one=kION(nl,T); % 1*nl row
+    k_tbr_one=kTBR(nl(1:index),T); % 1*index row
     
     
     D_RX=UX;
@@ -241,15 +241,34 @@ function dy=eqrateode(t,y)              %has to be a colume vector
 
         D_V=4/3*pi*( D_RX.*RY.*RZ+RX.*D_RY.*RZ+RX.*RY.*D_RZ - ( [0; D_RX(1:end-1)].*[0; RY(1:end-1)].*[0; RZ(1:end-1)]+[0; RX(1:end-1)].*[0; D_RY(1:end-1)].*[0; RZ(1:end-1)]+[0; RX(1:end-1)].*[0; RY(1:end-1)].*[0; D_RZ(1:end-1)] ))
      end
+ 
      
-   for r=1:N %loop through all shells
-   
-        VOL(:,r)=repmat(V(r),[ns,1]);
-        D_VOL(:,r)=repmat(D_V(r), [ns,1]);
-    end 
+     
+     
+     VOL=repmat(V',ns,1);
+     D_VOL=repmat(D_V', ns,1);
+     
+%    for r=1:N %loop through all shells
+%    
+%         VOL(:,r)=repmat(V(r),[ns,1])
+%         D_VOL(:,r)=repmat(D_V(r), [ns,1]);
+%     end 
   
     % Evaluate the updated rate terms:
 
+    %using vectorization instead of for loop
+    nden=reshape(nden,[ns,N]);
+    
+    d_tbr=zeros(numlev,N);
+    d_tbr(1:index,:)=k_tbr_one*eden'.^3  %numlev*N matrix with 1:index row nonzero
+    d_tbr=sum(d_tbr)                     % sum over all levels collapse to 1*N row
+    
+    d_ion=kion_one'*nden.*eden'   %1*N row
+    
+    d_n_np
+    
+    
+    
    for z=1:N
 
         
@@ -266,7 +285,7 @@ function dy=eqrateode(t,y)              %has to be a colume vector
         
         % rate for transfer from n to n', unit [kn_np] = um^3 ns^-1
         
-        d_n_np=sum(k_n_np,2).*nden(h:k)*eden(z);            %[um^-3 ns^-1]
+        d_n_np=sum(k_n_np,2).*nden(h:k)*eden(z);            %[um^-3 ns^-1] 
         
         % rate for transfer from n' to n, [knp_n] = ns^-1
         k_np_n=zeros(numlev,numlev);
