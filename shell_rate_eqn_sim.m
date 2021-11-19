@@ -230,7 +230,7 @@ function dy=eqrateode(t,y)              %has to be a colume vector
         D_V=zeros(N,1);%*4/3*pi*( D_RX.*RY.*RZ+RX.*D_RY.*RZ+RX.*RY.*D_RZ - ( [0; D_RX(1:end-1)].*[0; RY(1:end-1)].*[0; RZ(1:end-1)]+[0; RX(1:end-1)].*[0; D_RY(1:end-1)].*[0; RZ(1:end-1)]+[0; RX(1:end-1)].*[0; RY(1:end-1)].*[0; D_RZ(1:end-1)] ));
        
      else
-        dux=mean((-kBm*T*(diff_rho./eden(1:end-1))./diff_rx)./RX(2:end)); % eqiuation (14) Rafeal's paper
+        dux=mean((-kBm*T*(diff_rho./eden(1:end-1))./diff_rx)./RX(2:end)); % eqiuation (15) Rafeal's paper
         duy=mean((-kBm*T*(diff_rho./eden(1:end-1))./diff_ry)./RY(2:end));
         duz=mean((-kBm*T*(diff_rho./eden(1:end-1))./diff_rz)./RZ(2:end)); 
 
@@ -257,15 +257,22 @@ function dy=eqrateode(t,y)              %has to be a colume vector
     % Evaluate the updated rate terms:
 
     %using vectorization instead of for loop
-    nden=reshape(nden,[ns,N]);
+%     nden=reshape(nden,[ns,N]);
+%     
+%     d_tbr=zeros(numlev,N);
+%     d_tbr(1:index,:)=k_tbr_one*eden'.^3  % ns*N matrix with 1:index row nonzero
+%     %d_tbr=sum(d_tbr)                     % sum over all levels collapse to 1*N row
+%     
+%     d_ion=kion_one.*nden.*eden'   % ns*N matrix
+%     
+%     d_n_np=sum(k_n_np,2).*nden.*eden' % ns*N matrix
+%     
+%     k_np_n=k_n_np';
+%     
+%     k_np_n(index+1:end, :)=0;
+%     
+%     d_np_n=k_np_n*nden.*eden';
     
-    d_tbr=zeros(numlev,N);
-    d_tbr(1:index,:)=k_tbr_one*eden'.^3  %numlev*N matrix with 1:index row nonzero
-    d_tbr=sum(d_tbr)                     % sum over all levels collapse to 1*N row
-    
-    d_ion=kion_one'*nden.*eden'   %1*N row
-    
-    d_n_np
     
     
     
