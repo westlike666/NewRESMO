@@ -203,8 +203,8 @@ function dy=eqrateode(t,y)              %has to be a colume vector
     %D_VOL=zeros(ns,N);
     
     k_n_np=knnp(ni,nf,II,minn,maxn,diffsn,T);   % nl * nl matrix
-    kion_one=kION(nl,T); % scaler 
-    k_tbr_one=kTBR(nl(1:index),T); %scaler
+    kion_one=kION(nl,T); % 1*nl row
+    k_tbr_one=kTBR(nl(1:index),T); % 1*index row
     
     
     D_RX=UX;
@@ -224,7 +224,7 @@ function dy=eqrateode(t,y)              %has to be a colume vector
 
         D_UX= zeros(N,1);%*dux*RX; %% added 4 zeros
         D_UY= zeros(N,1);%*duy*RY;
-        D_UZ= 0;%*duz*RZ;
+        D_UZ= zeros(N,1);%*duz*RZ;
       
 
         D_V=zeros(N,1);%*4/3*pi*( D_RX.*RY.*RZ+RX.*D_RY.*RZ+RX.*RY.*D_RZ - ( [0; D_RX(1:end-1)].*[0; RY(1:end-1)].*[0; RZ(1:end-1)]+[0; RX(1:end-1)].*[0; D_RY(1:end-1)].*[0; RZ(1:end-1)]+[0; RX(1:end-1)].*[0; RY(1:end-1)].*[0; D_RZ(1:end-1)] ));
@@ -241,15 +241,32 @@ function dy=eqrateode(t,y)              %has to be a colume vector
 
         D_V=4/3*pi*( D_RX.*RY.*RZ+RX.*D_RY.*RZ+RX.*RY.*D_RZ - ( [0; D_RX(1:end-1)].*[0; RY(1:end-1)].*[0; RZ(1:end-1)]+[0; RX(1:end-1)].*[0; D_RY(1:end-1)].*[0; RZ(1:end-1)]+[0; RX(1:end-1)].*[0; RY(1:end-1)].*[0; D_RZ(1:end-1)] ))
      end
+ 
      
-   for r=1:N %loop through all shells
-   
-        VOL(:,r)=repmat(V(r),[ns,1]);
-        D_VOL(:,r)=repmat(D_V(r), [ns,1]);
-    end 
+     
+     
+     VOL=repmat(V',ns,1);
+     D_VOL=repmat(D_V', ns,1);
+     
+%    for r=1:N %loop through all shells
+%    
+%         VOL(:,r)=repmat(V(r),[ns,1])
+%         D_VOL(:,r)=repmat(D_V(r), [ns,1]);
+%     end 
   
     % Evaluate the updated rate terms:
 
+    
+    nden=reshape(nden,[ns,N]);
+    
+    d_tbr=zeros(numlev,N);
+    d_tbr(1:index,:)=k_tbr_one*eden'.^3  %numlev*N matrix with 1:index row nonzero
+    
+    d_ion=kion_one'*nden.*eden'   
+    
+    
+    
+    
    for z=1:N
 
         
