@@ -19,7 +19,7 @@ function [ni,nf,II,minn,maxn,diffsn]=buildns(nl)
 %         end
 %     end
 
-     II=II-diag(diag(II))    
+     II=II-diag(diag(II));  
     [nf, ni]=meshgrid(nl,nl); %ni refers to rows and nf referes to columns 
      minn=min(ni,nf);
      maxn=max(ni,nf);
