@@ -1,12 +1,12 @@
 %This part solves the rate equations and saves results in workspace
-clear; clc;
+clear; clc;close all
 tosave=true;
 for density=[0.04]   % in unit um^-3, which is 10^12*cm^-3
     tic
     N=100;%number of shells
-    t_max=10*1000; % time in ns 
+    t_max=1*1000; % time in ns 
     %steps=100;
-    single=false; % single means fixed volume all the time, does not expand(dV=0 and is not coupled in to rate equatins); has to be true for single shell 
+    single=true; % single means fixed volume all the time, does not expand(dV=0 and is not coupled in to rate equatins); has to be true for single shell 
     vectorize=true % using vectorizing method is much faster than using for loop
     
     sigma_x=1*1000;
@@ -48,6 +48,13 @@ for density=[0.04]   % in unit um^-3, which is 10^12*cm^-3
     deac_n_min=NDEN(deac_n_min, vol);
     deac_pd=NDEN(deac_pd, vol);
     deac_dr=EDEN(deac_dr, vol);
+    if tosave
+    clearvars y0
+    
+    save(strcat([filename, '.mat']))   
+     %save(strcat([filename, '_small', '.mat']))
+    end 
+    
 %%  plot  
     figure()
     plot(time,eden, 'displayname', '$NO^+ + e^-$')
@@ -63,14 +70,7 @@ for density=[0.04]   % in unit um^-3, which is 10^12*cm^-3
     plot(time,Te)
     xlabel('ns')
     ylabel('Temperature in K')
-    
-    if tosave
-    save(strcat([filename, '.mat']))   
-    
-    %clearvars y0
-    %save(strcat([filename, '_small', '.mat']))
-    end 
-    
+      
     toc
     
     
