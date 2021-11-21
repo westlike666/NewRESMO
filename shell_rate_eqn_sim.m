@@ -20,8 +20,7 @@
 
 %save workspace save('den0=1 n0=50, t0=50.mat','t','nden','eden','aden','Te')
 
-function [t,nden,eden,deac_n_min,deac_dr,deac_pd,Te,r_x,r_y,r_z,v_x,v_y,v_z,v,y0]=shell_rate_eqn_sim(den0, rx ,ry, rz ,n0, t_final, single) 
-
+function [t,nden,eden,deac_n_min,deac_dr,deac_pd,Te,r_x,r_y,r_z,v_x,v_y,v_z,v,y0]=shell_rate_eqn_sim(den0, rx ,ry, rz ,n0, t_final, single, vectorize) 
 
 
 %%%%%%%%%%%%%%%%%%%%%%
@@ -66,46 +65,40 @@ volume= 4/3*pi* (rx.*ry.*rz - [0; rx(1:end-1)].*[0; ry(1:end-1)].*[0; rz(1:end-1
 % Sets initial conditions for electron and n-level distributions:
 % no initial electrons -> calc. Penning seed electrons (look up Robicheaux)
 
-% for ii=1:N %loop though all shells
-%     h=1+(ii-1)*ns;
-%     k=ii*ns;
-%     hh=1+(ii-1)*n_min;
-%     kk=ii*n_min;
-%     
-%     
-%     [PF,eden,rden]=penningfraction(n0,den0(ii));
-%     % Redistributes the Penning partners over lower n's:
-%     f=@(x)5.95*x.^5;                % This is the penning fraction distribution
-%     np=firstn:fix(n0/sqrt(2));      % Array of n states allowed after Penn ion
-%     ind=1:length(np);               % This is the distribution of penning fraction
-%     nden=nl*0;
-%     nden(ind)=eden*f(np/n0)/sum(f(np/n0));  % dividing by the sum normalizes the function
-% 
-%     nden(nl==n0)=rden;              % set n0 to rden
-%     
-%     % Set initial temperature:    (Robicheaux 2005 JPhysB)
-%     T_PENNING(ii)=(-Ry*den0(ii)/n0^2 + Ry*rden/n0^2 + Ry*sum(nden(ind)./nl(ind).^2) )*1/(3/2*kB*eden); % by energy conservation
-% 
-%     deac=sum(nden(1:n_min));    % allow n<=n_min to decay
-%     D_DEAC_N_MIN(:,ii)=nden(1:n_min); %
-%     nden(1:n_min)=zeros(n_min,1); 
-%     
-%     NL(:,ii)=nl;       % save values for this shell in arrays
-%     DEN0(:,ii)=repmat(den0(ii),ns,1);
-%     NDEN(:,ii)=nden;     
-%     EDEN(ii)=eden;
-%     DEAC(ii)=deac;
-% end
-% 
-% 
-% DEN0
-% NDEN
-% EDEN
-% DEAC
-% D_DEAC_N_MIN
-% T_PENNING
 
+if vectorize==false
+for ii=1:N %loop though all shells
+    h=1+(ii-1)*ns;
+    k=ii*ns;
+    hh=1+(ii-1)*n_min;
+    kk=ii*n_min;
+    
+    
+    [PF,eden,rden]=penningfraction(n0,den0(ii));
+    % Redistributes the Penning partners over lower n's:
+    f=@(x)5.95*x.^5;                % This is the penning fraction distribution
+    np=firstn:fix(n0/sqrt(2));      % Array of n states allowed after Penn ion
+    ind=1:length(np);               % This is the distribution of penning fraction
+    nden=nl*0;
+    nden(ind)=eden*f(np/n0)/sum(f(np/n0));  % dividing by the sum normalizes the function
 
+    nden(nl==n0)=rden;              % set n0 to rden
+    
+    % Set initial temperature:    (Robicheaux 2005 JPhysB)
+    T_PENNING(ii)=(-Ry*den0(ii)/n0^2 + Ry*rden/n0^2 + Ry*sum(nden(ind)./nl(ind).^2) )*1/(3/2*kB*eden); % by energy conservation
+
+    deac=sum(nden(1:n_min));    % allow n<=n_min to decay
+    D_DEAC_N_MIN(:,ii)=nden(1:n_min); %
+    nden(1:n_min)=zeros(n_min,1); 
+    
+    NL(:,ii)=nl;       % save values for this shell in arrays
+    DEN0(:,ii)=repmat(den0(ii),ns,1);
+    NDEN(:,ii)=nden;     
+    EDEN(ii)=eden;
+    DEAC(ii)=deac;
+end
+
+else
 %same procesure but without for loop, not really helping...
 
 N0=n0*ones(1,N);
@@ -128,21 +121,16 @@ N0=n0*ones(1,N);
  NDEN(1:n_min,:)=0;   
  NL=nl*ones(1,N);               % save values for this shell in arrays
  %DEN0=ones(ns,1)*den0;
- 
+end
 
-% DEN0
-% NDEN
-% EDEN
-% DEAC
-% D_DEAC_N_MIN
-% T_PENNING
-%  
+
  
  
 
 %the penning temperature is equal for all densities! (density scaling factor cancels)
 T_penning = sum(T_PENNING.*(volume').*den0)/sum((volume').*den0); %calculate equlibrated penning temperature by weigted average
 
+T_penning=5;
 
 %%%%%%%%%%%%%%%%
 % Calculations %
@@ -153,7 +141,6 @@ y0=[reshape(NDEN,[ns*N,1]);EDEN;DEAC;DEAC_DR;reshape(DEAC_PD,[ns*N,1]);T_penning
 ncrit=@(T)round(sqrt(Ry/(kB*T)));  % to calculate n-max (got by fitting)
 
 [ni,nf,II,minn,maxn,diffsn]=buildns(nl);   % is needed to calculate the rate coeffs
-
 
 function dy=eqrateode(t,y)              %has to be a colume vector 
     
@@ -177,7 +164,8 @@ function dy=eqrateode(t,y)              %has to be a colume vector
     V= y((2*ns+9)*N+2:(2*ns+10)*N+1);   % slice of volume between each shell
     
     deac_n_min= y((2*ns+10)*N+2:end);
-      
+
+    
     nc=ncrit(T);            % calculates n max with this temperature    
 %     Adjusts max allowed n: 
     if nc>=nl(1) && nc<nl(end) 
@@ -187,8 +175,9 @@ function dy=eqrateode(t,y)              %has to be a colume vector
     else
         index=numlev;
     end
-     index=numlev; %deactive thermal criterion
-   
+    
+    index=numlev; %deactive thermal criterion
+     
     %preallocate arrays for all shells
     D_NDEN=zeros(ns,N);
     D_NDEN_OLD=zeros(ns,N);
@@ -228,7 +217,7 @@ function dy=eqrateode(t,y)              %has to be a colume vector
       
 
         D_V=zeros(N,1);%*4/3*pi*( D_RX.*RY.*RZ+RX.*D_RY.*RZ+RX.*RY.*D_RZ - ( [0; D_RX(1:end-1)].*[0; RY(1:end-1)].*[0; RZ(1:end-1)]+[0; RX(1:end-1)].*[0; D_RY(1:end-1)].*[0; RZ(1:end-1)]+[0; RX(1:end-1)].*[0; RY(1:end-1)].*[0; D_RZ(1:end-1)] ));
-       
+        D_v=zeros(N,1);
      else
         dux=mean((-kBm*T*(diff_rho./eden(1:end-1))./diff_rx)./RX(2:end)); % eqiuation (15) Rafeal's paper
         duy=mean((-kBm*T*(diff_rho./eden(1:end-1))./diff_ry)./RY(2:end));
@@ -239,7 +228,8 @@ function dy=eqrateode(t,y)              %has to be a colume vector
         D_UY= duy*RY;
         D_UZ= duz*RZ;
 
-        D_V=4/3*pi*( D_RX.*RY.*RZ+RX.*D_RY.*RZ+RX.*RY.*D_RZ - ( [0; D_RX(1:end-1)].*[0; RY(1:end-1)].*[0; RZ(1:end-1)]+[0; RX(1:end-1)].*[0; D_RY(1:end-1)].*[0; RZ(1:end-1)]+[0; RX(1:end-1)].*[0; RY(1:end-1)].*[0; D_RZ(1:end-1)] ))
+        D_V=4/3*pi*( D_RX.*RY.*RZ+RX.*D_RY.*RZ+RX.*RY.*D_RZ - ( [0; D_RX(1:end-1)].*[0; RY(1:end-1)].*[0; RZ(1:end-1)]+[0; RX(1:end-1)].*[0; D_RY(1:end-1)].*[0; RZ(1:end-1)]+[0; RX(1:end-1)].*[0; RY(1:end-1)].*[0; D_RZ(1:end-1)] ));
+        D_v=D_V./V;
      end
  
      
@@ -256,26 +246,65 @@ function dy=eqrateode(t,y)              %has to be a colume vector
   
     % Evaluate the updated rate terms:
 
-    %using vectorization instead of for loop
-%     nden=reshape(nden,[ns,N]);
-%     
-%     d_tbr=zeros(numlev,N);
-%     d_tbr(1:index,:)=k_tbr_one*eden'.^3  % ns*N matrix with 1:index row nonzero
-%     %d_tbr=sum(d_tbr)                     % sum over all levels collapse to 1*N row
-%     
-%     d_ion=kion_one.*nden.*eden'   % ns*N matrix
-%     
-%     d_n_np=sum(k_n_np,2).*nden.*eden' % ns*N matrix
-%     
-%     k_np_n=k_n_np';
-%     
-%     k_np_n(index+1:end, :)=0;
-%     
-%     d_np_n=k_np_n*nden.*eden';
+
+    
+if vectorize    
+%% start vectorizing  
+    nden=reshape(nden,[ns,N]);
+    deac_pd=reshape(deac_pd, [ns,N]);
+    deac_n_min=reshape(deac_n_min,[n_min,N]);
+    
+    
+    d_tbr=zeros(numlev,N);
+    d_tbr(1:index,:)=k_tbr_one*eden'.^3;  % ns*N matrix with 1:index row nonzero
+    %d_tbr=sum(d_tbr)                     % sum over all levels collapse to 1*N row
+    
+    d_ion=kion_one.*nden.*eden';   % ns*N matrix
+    
+    d_n_np=sum(k_n_np,2).*nden.*eden'; % ns*N matrix
+    
+    k_np_n=k_n_np';                    % ns*ns matrix
+    
+    k_np_n(index+1:end, :)=0;
+    
+    d_np_n=k_np_n*nden.*eden';      % ns*N matrix
+    
+     d_n_npion=sum(k_n_np(1:index,index+1:numlev),2)'*nden(1:index,:).*eden';  %  %  1*N  times  1*N =  1*N row
+    
+    D_DEAC_DR=kDR(T)*eden.^2;       % N*1 column 
+    
+    D_DEAC_PD=kpd_const.*nden;      % ns*N matrix
+    
+    dv=D_v;                    % N*1 column  
+    
+    D_EDEN_OLD=sum(d_ion-d_tbr)'+d_n_npion';  % N*1 colum
+    
+    D_EDEN=D_EDEN_OLD-D_DEAC_DR-eden.*dv; % N*1 column  
+    
+    d_nden=d_tbr-d_ion-d_n_np+d_np_n;  % ns*N matrix
+    
+    D_NDEN_OLD=d_nden;   % % ns*N matrix
+    
+    D_DEAC=sum(d_nden(1:n_min,:))';   % N*1 column  
+    
+    D_DEAC_N_MIN=d_nden(1:n_min,:);   % n_min*N matrix
+    
+    d_nden=d_nden-D_DEAC_PD-nden.*dv'; % ns*N matrix
+    
+    d_nden(1:n_min,:)=0;      % ns*N matrix
+    
+    D_NDEN=d_nden;            % ns*N matrix
+    
+    D_DEAC_DR=D_DEAC_DR-deac_dr.*dv;  % N*1 column
+    
+    D_DEAC_PD=D_DEAC_PD-deac_pd.*dv';  % ns*N matrix
+    
+    D_DEAC_N_MIN=D_DEAC_N_MIN-deac_n_min.*dv'; % n_min*N matrix
+else
     
     
     
-    
+ %% start looping
    for z=1:N
 
         
@@ -314,7 +343,8 @@ function dy=eqrateode(t,y)              %has to be a colume vector
         %comment to deactivate PREDISSOCIATION
         D_DEAC_PD(:,z)=kpd_const.*nden(h:k); 
         
-        dv=(D_V(z)/V(z));
+        %dv=(D_V(z)/V(z));
+        dv=D_v(z);
         
         D_EDEN_OLD(z)=sum(d_ion-d_tbr)+d_n_npion; 
         D_EDEN(z)=D_EDEN_OLD(z)-D_DEAC_DR(z)-eden(z)*dv;
@@ -334,8 +364,9 @@ function dy=eqrateode(t,y)              %has to be a colume vector
         D_DEAC_PD(:,z)=D_DEAC_PD(:,z)-deac_pd(h:k)*dv;
         D_DEAC_N_MIN(:,z)=D_DEAC_N_MIN(:,z)-deac_n_min(hh:kk)*dv;
         
-    end
-    
+   end 
+end
+%%
     %now calculate change in equilibrated temperature, use old D_NDEN_OLD
     %value to ensure deactivated states do not affect temperature
     %I guess here a quasi-equalibrium is assumend where dV=0 
@@ -381,7 +412,6 @@ v= y(:,(2*ns+9)*N+2:(2*ns+10)*N+1);
 
 deac_n_min=y(:,(2*ns+10)*N+2:end);
     
-
 
 end
 
