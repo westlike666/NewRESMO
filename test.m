@@ -1,6 +1,8 @@
-den0=[1,1,1];
-n0=49;
+%% initializing 
 
+den0=[1 1];
+n0=49;
+vectorize=true
 
 N=length(den0); %number of shells
 
@@ -104,18 +106,31 @@ N0=n0*ones(1,N);
 
 [ni,nf,II,minn,maxn,diffsn]=buildns(nl);
 
-index=50;
+index=60;
 
 k_n_np=knnp(ni,nf,II,minn,maxn,diffsn,T);   % nl * nl matrix
 kion_one=kION(nl,T); % 1*nl row
 k_tbr_one=kTBR(nl(1:index),T); % 1*index row
 kpd_const=kPD(nl);
-eden=EDEN;
-nden=NDEN+1;
+
+eden=EDEN; %N*1 colum
+nden=NDEN+1; 
 nden=reshape(nden,N*ns,1);
+
+
+D_NDEN=zeros(ns,N);
+D_NDEN_OLD=zeros(ns,N);
+D_EDEN=zeros(N,1);
+D_DEAC=zeros(N,1);
+D_EDEN_OLD=zeros(N,1);
+D_DEAC_DR=zeros(N,1);
+D_DEAC_PD=zeros(ns,N);
+D_DEAC_N_MIN=zeros(n_min,N);
+
 
 V = zeros(N,1);
 D_V= zeros(N,1);
+D_v= zeros(N,1)+1;
 
 deac_dr=zeros(N,1);     %       ...           dissociative recombination 
 deac_pd=zeros(N*ns,1);
@@ -123,8 +138,12 @@ deac_n_min=zeros(N*n_min,1);
 
 
 
-
+if vectorize
+%% start vectorizing  
     nden=reshape(nden,[ns,N]);
+    deac_pd=reshape(deac_pd, [ns,N]);
+    deac_n_min=reshape(deac_n_min,[n_min,N]);
+    
     
     d_tbr=zeros(numlev,N);
     d_tbr(1:index,:)=k_tbr_one*eden'.^3;  % ns*N matrix with 1:index row nonzero
@@ -134,83 +153,108 @@ deac_n_min=zeros(N*n_min,1);
     
     d_n_np=sum(k_n_np,2).*nden.*eden'; % ns*N matrix
     
-    k_np_n=k_n_np';
+    k_np_n=k_n_np';                    % ns*ns matrix
     
     k_np_n(index+1:end, :)=0;
     
     d_np_n=k_np_n*nden.*eden';      % ns*N matrix
     
-    d_n_npion=sum(k_n_np(1:index,index+1:numlev),2).*nden(1:index)'.*eden';  % index * N matrix 
+    d_n_npion=sum(k_n_np(1:index,index+1:numlev),2)'*nden(1:index,:).*eden';  %  1*N  times  1*N =  1*N row
     
+    D_DEAC_DR=kDR(T)*eden.^2;       % N*1 column 
     
+    D_DEAC_PD=kpd_const.*nden;      % ns*N matrix
+    
+    dv=D_v;                    % N*1 column  
+    
+    D_EDEN_OLD=sum(d_ion-d_tbr)'+d_n_npion';  % N*1 colum
+    
+    D_EDEN=D_EDEN_OLD-D_DEAC_DR-eden.*dv; % N*1 column  
+    
+    d_nden=d_tbr-d_ion-d_n_np+d_np_n;  % ns*N matrix
+    
+    D_NDEN_OLD=d_nden;   % % ns*N matrix
+    
+    D_DEAC=sum(d_nden(1:n_min,:))';   % N*1 column  
+    
+    D_DEAC_N_MIN=d_nden(1:n_min,:);   % n_min*N matrix
+    
+    d_nden=d_nden-D_DEAC_PD-nden.*dv'; % ns*N matrix
+    
+    d_nden(1:n_min,:)=0;      % ns*N matrix
+    
+    D_NDEN=d_nden;            % ns*N matrix
+    
+    D_DEAC_DR=D_DEAC_DR-deac_dr.*dv;  % N*1 column
+    
+    D_DEAC_PD=D_DEAC_PD-deac_pd.*dv';  % ns*N matrix
+    
+    D_DEAC_N_MIN=D_DEAC_N_MIN-deac_n_min.*dv'; % n_min*N matrix
+   
+else 
+%% start looping 
+ for z=1:N
 
+        
+        h=1+(z-1)*ns;
+        k=z*ns;
+        
+        hh=1+(z-1)*n_min;
+        kk=z*n_min;
+        
+        d_tbr=zeros(numlev,1);
+        d_tbr(1:index)=k_tbr_one*eden(z)^3; % units [d_tbr] = um^-3 ns^-1
+    
+        d_ion=kion_one.*nden(h:k)*eden(z); % units [d_ion] = um^-3 ns^-1
+        
+        % rate for transfer from n to n', unit [kn_np] = um^3 ns^-1
+        
+        d_n_np=sum(k_n_np,2).*nden(h:k)*eden(z);            %[um^-3 ns^-1] 
+        
+        % rate for transfer from n' to n, [knp_n] = ns^-1
+        k_np_n=zeros(numlev,numlev);
+       % only to levels <= nc
+         k_np_n(1:index,1:numlev)=(k_n_np(1:numlev,1:index).*(nden(h:h+numlev-1)))'; 
+      
+        d_np_n=sum(k_np_n,2)*eden(z);                  %[um^-3 ns^-1]
+    
+        % transfer from n's above ncrit(T) to eden
+        k_n_npion=zeros(numlev,1);
+        if index<=numlev 
+            k_n_npion(1:index)=sum(k_n_np(1:index,index+1:numlev),2).*nden(h:h+index-1); % [kn_npion] = ns^-1
+        end
+        d_n_npion=sum(k_n_npion)*eden(z);              %[um^-3 ns^-1]
+        
+        %comment to deactivate DISSOCIATIVE RECOMBINATION
+        D_DEAC_DR(z)=kDR(T)*eden(z)^2;
+        
+        %comment to deactivate PREDISSOCIATION
+        D_DEAC_PD(:,z)=kpd_const.*nden(h:k); 
+        
+        %dv=(D_V(z)/V(z));
+        dv=D_v(z);
+        
+        D_EDEN_OLD(z)=sum(d_ion-d_tbr)+d_n_npion; 
+        D_EDEN(z)=D_EDEN_OLD(z)-D_DEAC_DR(z)-eden(z)*dv;
 
+        d_nden=d_tbr-d_ion-d_n_np+d_np_n;
+        D_NDEN_OLD(:,z)=d_nden; %array whithout radiative decay for temperature calculation
+            % Implements radiative decay/PD for levels n <= n_min:
+        D_DEAC(z)=sum(d_nden(1:n_min));     % aden is the number of Ry's decayed radiatively to the groundstate
+        D_DEAC_N_MIN(:,z)=d_nden(1:n_min);
 
-
-
-%  for z=1:N
-% 
-%         
-%         h=1+(z-1)*ns;
-%         k=z*ns;
-%         
-%         hh=1+(z-1)*n_min;
-%         kk=z*n_min;
-%         
-%         d_tbr=zeros(numlev,1);
-%         d_tbr(1:index)=k_tbr_one*eden(z)^3; % units [d_tbr] = um^-3 ns^-1
-%     
-%         d_ion=kion_one.*nden(h:k)*eden(z); % units [d_ion] = um^-3 ns^-1
-%         
-%         % rate for transfer from n to n', unit [kn_np] = um^3 ns^-1
-%         
-%         d_n_np=sum(k_n_np,2).*nden(h:k)*eden(z);            %[um^-3 ns^-1] 
-%         
-%         % rate for transfer from n' to n, [knp_n] = ns^-1
-%         k_np_n=zeros(numlev,numlev);
-%        % only to levels <= nc
-%          k_np_n(1:index,1:numlev)=(k_n_np(1:numlev,1:index).*(nden(h:h+numlev-1)))'; 
-%       
-%         d_np_n=sum(k_np_n,2)*eden(z);                  %[um^-3 ns^-1]
-%     
-%         % transfer from n's above ncrit(T) to eden
-%         k_n_npion=zeros(numlev,1);
-%         if index<=numlev 
-%             k_n_npion(1:index)=sum(k_n_np(1:index,index+1:numlev),2).*nden(h:h+index-1); % [kn_npion] = ns^-1
-%         end
-%         d_n_npion=sum(k_n_npion)*eden(z);              %[um^-3 ns^-1]
-%         
-%         %comment to deactivate DISSOCIATIVE RECOMBINATION
-%         D_DEAC_DR(z)=kDR(T)*eden(z)^2;
-%         
-%         %comment to deactivate PREDISSOCIATION
-%         D_DEAC_PD(:,z)=kpd_const.*nden(h:k); 
-%         
-%         dv=(D_V(z)/V(z));
-%         
-%         D_EDEN_OLD(z)=sum(d_ion-d_tbr)+d_n_npion; 
-%         D_EDEN(z)=D_EDEN_OLD(z)-D_DEAC_DR(z)-eden(z)*dv;
-% 
-%         d_nden=d_tbr-d_ion-d_n_np+d_np_n;
-%         D_NDEN_OLD(:,z)=d_nden; %array whithout radiative decay for temperature calculation
-%             % Implements radiative decay/PD for levels n <= n_min:
-%         D_DEAC(z)=sum(d_nden(1:n_min));     % aden is the number of Ry's decayed radiatively to the groundstate
-%         D_DEAC_N_MIN(:,z)=d_nden(1:n_min);
-% 
-%         d_nden=d_nden-D_DEAC_PD(:,z)-nden(h:k)*dv; %reduce by predissociation
-%         d_nden(1:n_min)=zeros(n_min,1); 
-%         
-%         D_NDEN(:,z)=d_nden;
-%         
-%         D_DEAC_DR(z)=D_DEAC_DR(z)-deac_dr(z)*dv;
-%         D_DEAC_PD(:,z)=D_DEAC_PD(:,z)-deac_pd(h:k)*dv;
-%         D_DEAC_N_MIN(:,z)=D_DEAC_N_MIN(:,z)-deac_n_min(hh:kk)*dv;
-%         
-% end
-
-
-
-
+        d_nden=d_nden-D_DEAC_PD(:,z)-nden(h:k)*dv; %reduce by predissociation
+        d_nden(1:n_min)=zeros(n_min,1); 
+        
+        D_NDEN(:,z)=d_nden;
+        
+        D_DEAC_DR(z)=D_DEAC_DR(z)-deac_dr(z)*dv;
+        D_DEAC_PD(:,z)=D_DEAC_PD(:,z)-deac_pd(h:k)*dv;
+        D_DEAC_N_MIN(:,z)=D_DEAC_N_MIN(:,z)-deac_n_min(hh:kk)*dv;
+        
+ end
+%%
+end
 
 
 
