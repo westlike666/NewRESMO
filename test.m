@@ -106,12 +106,18 @@ N0=n0*ones(1,N);
 
 [ni,nf,II,minn,maxn,diffsn]=buildns(nl);
 
-index=60;
+index=100;
 
 k_n_np=knnp(ni,nf,II,minn,maxn,diffsn,T);   % nl * nl matrix
 kion_one=kION(nl,T); % 1*nl row
 k_tbr_one=kTBR(nl(1:index),T); % 1*index row
 kpd_const=kPD(nl);
+
+k_CT=100*k_tbr_one;  % This is just an approximation of k_CT of Hydrodynamic recombination 
+k_amb=1*kDR(T);        % Loss of NO+ ions to ambipolar expansion,  approximation
+kpd_slow=1*kPD_slow(nl);  % predissociation rate represented by high l Rydberg only
+
+
 
 eden=EDEN; %N*1 colum
 nden=NDEN+1; 
@@ -144,6 +150,12 @@ if vectorize
     deac_pd=reshape(deac_pd, [ns,N]);
     deac_n_min=reshape(deac_n_min,[n_min,N]);
     
+    d_ct=zeros(numlev,N);
+    d_ct(1:index,:)= k_CT.*nden(1:index,:).*eden'.^2;  % ns*N matrix with 1:index row nonzero    
+    
+    d_amb=k_amb*eden  % N*1 column 
+    
+     
     
     d_tbr=zeros(numlev,N);
     d_tbr(1:index,:)=k_tbr_one*eden'.^3;  % ns*N matrix with 1:index row nonzero
@@ -163,15 +175,18 @@ if vectorize
     
     D_DEAC_DR=kDR(T)*eden.^2;       % N*1 column 
     
-    D_DEAC_PD=kpd_const.*nden;      % ns*N matrix
-    
+%    D_DEAC_PD=kpd_const.*nden;      % ns*N matrix
+    D_DEAC_PD=kpd_slow.*nden;      % ns*N matrix
+     
     dv=D_v;                    % N*1 column  
     
-    D_EDEN_OLD=sum(d_ion-d_tbr)'+d_n_npion';  % N*1 colum
+ %   D_EDEN_OLD=sum(d_ion-d_tbr)'+d_n_npion';  % N*1 colum
+    D_EDEN_OLD=sum(d_ion-d_tbr-d_ct)'+d_n_npion';  % N*1 colum   
+  
+    D_EDEN=D_EDEN_OLD-D_DEAC_DR-d_amb-eden.*dv; % N*1 column  
     
-    D_EDEN=D_EDEN_OLD-D_DEAC_DR-eden.*dv; % N*1 column  
-    
-    d_nden=d_tbr-d_ion-d_n_np+d_np_n;  % ns*N matrix
+%    d_nden=d_tbr-d_ion-d_n_np+d_np_n;  % ns*N matrix
+    d_nden=d_ct+d_tbr-d_ion-d_n_np+d_np_n;  % ns*N matrix
     
     D_NDEN_OLD=d_nden;   % % ns*N matrix
     
