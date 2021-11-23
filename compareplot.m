@@ -33,3 +33,13 @@
     ylabel('Temperature in K')
     legend('expansion', 'static')
     hold off
+    
+ %% stack   
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 

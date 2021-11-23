@@ -1,10 +1,10 @@
 %This part solves the rate equations and saves results in workspace
 clear; clc;close all
-tosave=true;
+tosave=false;
 for density=[0.04]   % in unit um^-3, which is 10^12*cm^-3
     tic
     N=100;%number of shells
-    t_max=1*1000; % time in ns 
+    t_max=10000; % time in ns 
     %steps=100;
     single=true; % single means fixed volume all the time, does not expand(dV=0 and is not coupled in to rate equatins); has to be true for single shell 
     vectorize=true % using vectorizing method is much faster than using for loop
@@ -40,7 +40,7 @@ for density=[0.04]   % in unit um^-3, which is 10^12*cm^-3
         num2str(sigma_y/1000),'mm',num2str(sigma_z/1000),'mm', '_tfinal',num2str(t_max),'ns_',num2str(sigma_env),'sigmaenv', '_fixvolume=', num2str(single)];
     
     %solve rate equations
-    [time,nden,eden,deac_n_min,deac_dr,deac_pd,Te,rx,ry,rz,vx,vy,vz,vol,y0]=shell_rate_eqn_sim(d, pos_x, pos_y, pos_z, n, t_max, single, vectorize);
+    [time,nden,eden,deac_n_min,deac_dr,deac_pd,Te,rx,ry,rz,vx,vy,vz,vol,y0]=shell_rate_eqn_sim_soc(d, pos_x, pos_y, pos_z, n, t_max, single, vectorize);
     
     %reduce file size by deleting shell specific information
     eden=EDEN(eden,vol);
