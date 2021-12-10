@@ -1,7 +1,7 @@
 %This part solves the rate equations and saves results in workspace
 clear; clc;close all
 tosave=false;
-for density=[0.04]   % in unit um^-3, which is 10^12*cm^-3
+for density=[0.01]   % in unit um^-3, which is 10^12*cm^-3
     tic
     N=100;%number of shells
     t_max=10000; % time in ns 
