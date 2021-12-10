@@ -253,6 +253,7 @@ function dy=eqrateode(t,y)              %has to be a colume vector
     
 if vectorize    
 %% start vectorizing  
+    %this approach is in parellel with for loop approach. The physical meaning of each term is indicated in the for loop below
     nden=reshape(nden,[ns,N]);
     deac_pd=reshape(deac_pd, [ns,N]);
     deac_n_min=reshape(deac_n_min,[n_min,N]);
