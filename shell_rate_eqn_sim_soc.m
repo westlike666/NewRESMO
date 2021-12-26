@@ -254,53 +254,53 @@ function dy=eqrateode(t,y)              %has to be a colume vector
 if vectorize    
 %% start vectorizing  
     %this approach is in parellel with for loop approach. The physical meaning of each term is indicated in the for loop below
-    nden=reshape(nden,[ns,N]);
-    deac_pd=reshape(deac_pd, [ns,N]);
+    nden=reshape(nden,[ns,N]); % density of NO^* Rydberg on ns states and N shells 
+    deac_pd=reshape(deac_pd, [ns,N]);  
     deac_n_min=reshape(deac_n_min,[n_min,N]);
     
-    d_ct=zeros(numlev,N);
+    d_ct=zeros(numlev,N); % charge transfer term with rate k_CT
     d_ct(1:index,:)= k_CT.*nden(1:index,:).*eden'.^2;  % ns*N matrix with 1:index row nonzero    
     
-    d_amb=k_amb*eden;  % N*1 column 
+    d_amb=k_amb*eden;  %term due to ambipolar loss,  N*1 column 
     
      
     
-    d_tbr=zeros(numlev,N);
-    d_tbr(1:index,:)=k_tbr_one*eden'.^3;  % ns*N matrix with 1:index row nonzero
-    %d_tbr=sum(d_tbr)                     % sum over all levels collapse to 1*N row
+    d_tbr=zeros(numlev,N); 
+    d_tbr(1:index,:)=k_tbr_one*eden'.^3;  % three-body recombination term with rate k_tbr; ns*N matrix with 1:index row nonzero
+  
     
-    d_ion=kion_one.*nden.*eden';   % ns*N matrix
+    d_ion=kion_one.*nden.*eden';   % electron impact ionization term;  ns*N matrix
     
-    d_n_np=sum(k_n_np,2).*nden.*eden'; % ns*N matrix
+    d_n_np=sum(k_n_np,2).*nden.*eden'; %collisional l-mixing term with transfering rate from n to n'; ns*N matrix
     
     k_np_n=k_n_np';                    % ns*ns matrix
     
     k_np_n(index+1:end, :)=0;
     
-    d_np_n=k_np_n*nden.*eden';      % ns*N matrix
+    d_np_n=k_np_n*nden.*eden';      % l-mixing transfer from n' to n; ns*N matrix
     
-    d_n_npion=sum(k_n_np(1:index,index+1:numlev),2)'*nden(1:index,:).*eden';  %  1*N  times  1*N =  1*N row
+    d_n_npion=sum(k_n_np(1:index,index+1:numlev),2)'*nden(1:index,:).*eden';  %  transfer from n's above ncrit(T) to eden;  1*N  times  1*N =  1*N row
     
-    D_DEAC_DR=kDR(T)*eden.^2;       % N*1 column 
+    D_DEAC_DR=kDR(T)*eden.^2;       %DISSOCIATIVE RECOMBINATION;  N*1 column 
     
 %    D_DEAC_PD=kpd_const.*nden;      % ns*N matrix
-    D_DEAC_PD=kpd_slow.*nden;      % ns*N matrix
+    D_DEAC_PD=kpd_slow.*nden;      %  PREDISSOCIATION;  ns*N matrix
      
-    dv=D_v;                    % N*1 column  
+    dv=D_v;                    % change of Volume;  N*1 column  
     
  %   D_EDEN_OLD=sum(d_ion-d_tbr)'+d_n_npion';  % N*1 colum
     D_EDEN_OLD=sum(d_ion-d_tbr-d_ct)'+d_n_npion';  % N*1 colum   
   
-    D_EDEN=D_EDEN_OLD-D_DEAC_DR-d_amb-eden.*dv; % N*1 column   
+    D_EDEN=D_EDEN_OLD-D_DEAC_DR-d_amb-eden.*dv; % calculate the total change of electron density in N shell; N*1 column   
     
 %    d_nden=d_tbr-d_ion-d_n_np+d_np_n;  % ns*N matrix
-    d_nden=d_ct+d_tbr-d_ion-d_n_np+d_np_n;  % ns*N matrix
+    d_nden=d_ct+d_tbr-d_ion-d_n_np+d_np_n;  % calculate the total change of Rydberg molecules on ns states in N shell; ns*N matrix
     
     D_NDEN_OLD=d_nden;   % % ns*N matrix
     
     D_DEAC=sum(d_nden(1:n_min,:))';   % N*1 column  
     
-    D_DEAC_N_MIN=d_nden(1:n_min,:);   % n_min*N matrix
+    D_DEAC_N_MIN=d_nden(1:n_min,:);   % density change of radiatively decayed atoms;  n_min*N matrix
     
     d_nden=d_nden-D_DEAC_PD-nden.*dv'; % ns*N matrix
     
@@ -308,9 +308,9 @@ if vectorize
     
     D_NDEN=d_nden;            % ns*N matrix
     
-    D_DEAC_DR=D_DEAC_DR-deac_dr.*dv;  % N*1 column
+    D_DEAC_DR=D_DEAC_DR-deac_dr.*dv;  % density change of dissociative recombination atoms; N*1 column
     
-    D_DEAC_PD=D_DEAC_PD-deac_pd.*dv';  % ns*N matrix
+    D_DEAC_PD=D_DEAC_PD-deac_pd.*dv';  % density change of predissociation atoms;  ns*N matrix
     
     D_DEAC_N_MIN=D_DEAC_N_MIN-deac_n_min.*dv'; % n_min*N matrix
 else
