@@ -1,5 +1,5 @@
 
-function [t,rs, edens, n_ions, n_highs, nDens,Tn, r0, tau]=simple1D(N,k,dp,n0,sigma,tspan,gamma1,gamma2,k_pd,visualize)
+function [t,rs, edens, n_ions, n_highs, nDens,Tn, r0, tau]=simple1D(N,k,dp,n0,sigma,tspan,gamma1,gamma2,k_pd,k_DR,visualize)
 close all
 
 %% define self-similar expanding shells  
@@ -118,7 +118,7 @@ if step<k+1 % let the NO^** wait for k shells before starting move together with
 else
     d_high=[zeros(k,ns);2*d_CT(1:end-step+1,:);zeros(step-1-k,ns)];  % N*ns matrix; NO^** start moving, falling behind of NO^+ by k shells. so the overall velocity is u/2.  
     
-    d_CT2= k_CT2.*n_ion.*eden.*[n_high(1:end-k);zeros(k,1)]; % N*1 colume
+    d_CT2= k_CT2.*n_ion.*eden.*[n_high(k+1:end);zeros(k,1)]; % N*1 colume
     
     % d_CT2(1:end-k) is the overlapping (non-zero) region
     
@@ -129,7 +129,7 @@ end
  d_eden2=-d_CT2;
  
  
- d_ion=d_ion+d_ion2;
+ d_ion=d_ion+d_ion2-k_DR*n_ion.*eden;
  d_eden=d_eden+d_eden2;
  
  d_nDen=d_nDen-k_pd*nDen';
