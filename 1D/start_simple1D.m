@@ -1,21 +1,23 @@
 close all
 clear
 clc
-N=10% number of shells 
+N=100% number of shells 
 dp=1 % peak density
 sigma=1 %
-gamma1=50
-gamma2=50
-
-
+gamma1=10
+gamma2=10
+n0=50
+k_pd=0.01
+k_DR=0.1
+k=round(0.1*N)+1
 %t_final=10
 visualize=true
 
-t_final=10
+t_final=1
 dt=0.1
 tspan=[0:dt:t_final]
 
-[t,rs, edens, n_ions, n_highs, nDens, Tn, r0, tau]=simple1D(N,dp,sigma,tspan,gamma1,gamma2,visualize);
+[t,rs, edens, n_ions, n_highs, nDens, Tn, r0, tau]=simple1D(N,k,dp,n0,sigma,tspan,gamma1,gamma2,k_pd,k_DR,visualize);
 
 
 %t_final=max(Tn)
@@ -60,7 +62,7 @@ for T=tspan
     clf
   
     subplot(2,2,1)
-    ylim([0 2])
+    ylim([0 10])
 %   t_n=Tn(abs(T-Tn)<=dt);
     t_n=T;
     for i=[1:length(s)]
