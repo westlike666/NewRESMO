@@ -8,7 +8,7 @@ N=15; % number of shells
 
 r0=1;
 tau=1;
-k=round(0.1*N)+1; % k is off number of shells between NO^** and NO^+. set to approximately 10% of total shells 
+k=round(0.1*N)+1 % k is off number of shells between NO^** and NO^+. set to approximately 10% of total shells 
 t1=(2^(2/k)-1)^0.5*tau;
 %t1=1;
 s=zeros(N,1)';
@@ -156,15 +156,15 @@ plot(s0,'.')
 figure()
 hold on 
 dt=0.1;
-for t=[0:dt:1]
+for t=[0:dt:10]
     s=y_ana(t,s0,tau);
     clf
-    ylim([0 2])
+    ylim([0 10])
     t_n=Tn(abs(t-Tn)<dt);   
     for i=[1:length(s)]
         yline(s(i))
-        yline(0.5*(s(i)),'red') % start with 2 shells off 
-%        yline(0.5*(Y(i)+Y0(i)),'red') % start together 
+        yline(0.5*(s(i)),'red') % start with k shells off 
+%        yline(0.5*(s(i)+s0(i)),'red') % start together 
         yline(s0(i),'green')
     end
     if isempty(t_n)==0
