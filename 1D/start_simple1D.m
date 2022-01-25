@@ -1,19 +1,19 @@
 close all
 clear
 clc
-N=100% number of shells 
-dp=1 % peak density
+N=10% number of shells 
+dp=0.01 % peak density
 sigma=1 %
-gamma1=10
-gamma2=10
+gamma1=1
+gamma2=1
 n0=50
-k_pd=0.01
+k_pd=0.1
 k_DR=0.1
 k=round(0.1*N)+1
 %t_final=10
 visualize=true
 
-t_final=1
+t_final=30
 dt=0.1
 tspan=[0:dt:t_final]
 
