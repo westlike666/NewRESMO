@@ -4,11 +4,11 @@ clc
 N=100% number of shells 
 k=round(0.1*N)+1 %k=round(0.1*N)+1; % k is off number of shells between NO^** and NO^+. set to approximately 10% of total shells 
 n0=50;
-dp=0.5% peak density
-gamma1=1
-gamma2=10
-k_pd=0.01;
-k_DR=0.1
+dp=0.2% peak density
+gamma1=100
+gamma2=100
+k_pd=0.1;
+k_DR=0.1;
 
 visualize=false;
 save=false
@@ -77,7 +77,7 @@ for i=[1:length(tspan)]
     set(h, 'EdgeColor', 'none')
     cmap=colormap;
     set(gca,'Color',cmap(1,:))
-%    caxis([0 cmax])
+    caxis([0 cmax])
     title('NO^* Rydberg')
     axis(10*[-1 1 -1 1])
     
@@ -97,7 +97,8 @@ for i=[1:length(tspan)]
     set(h, 'EdgeColor', 'none')
     cmap=colormap;
     set(gca,'Color',cmap(1,:))
-    caxis([0 cmax])
+%    caxis([0 cmax])
+    caxis
     ylabel('relative density')
     axis(2500*[-1 1 -1 1]) 
     title('NO^{**} long-lived Rydberg')
