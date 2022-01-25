@@ -83,24 +83,40 @@ u=t/(t^2+tau^2).*r; % expanding volecity at r
 k_CT=gamma_CT*u;  % calculate the charge transfer rate: larger speed (r) causes more charge transfer within that shell at given amount of time 
 k_CT2=k_CT;
 
+k_pd=0.1
+k_DR=0.1
+
+k_ion=0.1; % ionization
+k_tbr=0.1;  % three body recombination
+
+
+%e + NO^+ +NO^* == 2NO^**   with k_CT
+%e + NO^+ +NO^** == 2NO^**  with k_CT2   
+
+%e + NO^* ==NO^+ + 2e       k_ion
+%2e + NO^+ ==NO^* + e       k_tbr
+
+
 % Now consider the reactions happening in the overlapping shells of NO^+ (moving with u), NO^* (stationary) , NO^** (moving with 0.5u and falling k shells behind NO^+ )     
 %This means that the firth kth NO^** shells are alaways empty. and the kth frontier NO^+ should not contribute to the NO^** production since there is no overlap with NO^** frontiers    
 % The overlapping times are determined by Tn
 
-step=sum(t>=Tn)+1
+step=sum(t>=Tn)+1;
 
-%e + NO^+ +NO^* == 2NO^**   with k_CT
-%e + NO^+ +NO^** == 2NO^**  with k_CT2
+d_ionize=k_ion.*eden.*[nDen(:,step:end),zeros(ns,step-1)]'; % N*ns matrix: the outer (step) shells are zero
+% d_ionize(1:end-step+1,:) is the overlapping (non-zero) region
+
+d_tbr=k_tbr.*eden.^3; % N*1 colume
+% d_tbr(1:end-step+1,:) is the overlapping (non-zero) region
 
 d_CT=k_CT.*n_ion.*eden.*[nDen(:,step:end),zeros(ns,step-1)]'; % N*ns matrix: the outer (step) shells are zero
-
 % d_CT(1:end-step+1,:) is the overlapping (non-zero) region
 
-d_eden=sum(-d_CT,2); % N*1 colums 
+d_eden=sum(-d_CT+d_ionize-d_tbr,2); % N*1 colums 
 
 d_ion=d_eden;
 
-d_nDen=[zeros(step-1,ns);-d_CT(1:end-step+1,:)];  % N*ns matrix: the inner (step) shells are zero 
+d_nDen=[zeros(step-1,ns);-d_CT(1:end-step+1,:)-d_ionize(1:end-step+1,:)+d_tbr(1:end-step+1,:)];  % N*ns matrix: the inner (step) shells are zero 
 
 gate=1;
 
@@ -117,19 +133,21 @@ if step<k+1 % let the NO^** wait for k shells before starting move together with
 else
     d_high=[zeros(k,ns);2*d_CT(1:end-step+1,:);zeros(step-1-k,ns)];  % N*ns matrix; NO^** start moving, falling behind of NO^+ by k shells. so the overall velocity is u/2.  
     
-    d_CT2= k_CT2.*n_ion.*eden.*[n_high(1:end-k);zeros(k,1)]; % N*1 colume
+    d_CT2= k_CT2.*n_ion.*eden.*[n_high(k+1:end);zeros(k,1)]; % N*1 colume
     
     % d_CT2(1:end-k) is the overlapping (non-zero) region
     
     d_high2=[zeros(k,1);d_CT2(1:end-k)];  % N*1 colume   
 end
  
- d_ion2=-d_CT2;
+% d_ion2=-d_CT2;
  d_eden2=-d_CT2;
  
+
+ d_eden=d_eden+d_eden2-k_DR*n_ion.*eden;
+ d_ion=d_eden;
  
- d_ion=d_ion+d_ion2;
- d_eden=d_eden+d_eden2;
+ d_nDen=d_nDen-k_pd*nDen';
  
 d_high=sum(d_high,2)+d_high2; % N*1 colums
 
