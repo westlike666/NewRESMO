@@ -35,7 +35,6 @@ den0=dp*exp(-([0,r_z(2:end)].^2)./(2.*sigma_z^2));
 
 N0=n0*ones(1,N);
 [PF,eden,n_Ryd]=penningfraction(N0,den0); % density in um^-3
-
 n_ion=eden;
 
 % n_ion=penning_fraction/2*den0; % NO^+ ion 
@@ -45,7 +44,7 @@ n_ion=eden;
 
 n_high=0*n_ion; % long-lived NO^**
 
-expand=false  % expand the NO^* Rydberg into different levels 
+expand=false;  % expand the NO^* Rydberg into different levels 
 if expand
      f=@(x)5.95*x.^5;                % This is the penning fraction distribution
      np=1:fix(n0/sqrt(2));      % Array of n states allowed after Penn ion
@@ -82,8 +81,17 @@ u=t/(t^2+tau^2).*r; % expanding volecity at r
 
 k_CT=gamma1*u;  % calculate the charge transfer rate: larger speed (r) causes more charge transfer within that shell at given amount of time 
 k_CT2=gamma2*u;
+
+k_ion=10; % ionization
+k_tbr=10;  % three body recombination
+
+
 %e + NO^+ +NO^* == 2NO^**   with k_CT
 %e + NO^+ +NO^** == 2NO^**  with k_CT2   
+
+%e + NO^* ==NO^+ + 2e       k_ion
+%2e + NO^+ ==NO^* + e       k_tbr
+
 
 % Now consider the reactions happening in the overlapping shells of NO^+ (moving with u), NO^* (stationary) , NO^** (moving with 0.5u and falling k shells behind NO^+ )     
 %This means that the firth kth NO^** shells are alaways empty. and the kth frontier NO^+ should not contribute to the NO^** production since there is no overlap with NO^** frontiers    
@@ -91,17 +99,20 @@ k_CT2=gamma2*u;
 
 step=sum(t>=Tn)+1;
 
+d_ionize=k_ion.*eden.*[nDen(:,step:end),zeros(ns,step-1)]'; % N*ns matrix: the outer (step) shells are zero
+% d_ionize(1:end-step+1,:) is the overlapping (non-zero) region
 
+d_tbr=k_tbr.*eden.^3; % N*1 colume
+% d_tbr(1:end-step+1,:) is the overlapping (non-zero) region
 
 d_CT=k_CT.*n_ion.*eden.*[nDen(:,step:end),zeros(ns,step-1)]'; % N*ns matrix: the outer (step) shells are zero
-
 % d_CT(1:end-step+1,:) is the overlapping (non-zero) region
 
-d_eden=sum(-d_CT,2); % N*1 colums 
+d_eden=sum(-d_CT+d_ionize-d_tbr,2); % N*1 colums 
 
 d_ion=d_eden;
 
-d_nDen=[zeros(step-1,ns);-d_CT(1:end-step+1,:)];  % N*ns matrix: the inner (step) shells are zero 
+d_nDen=[zeros(step-1,ns);-d_CT(1:end-step+1,:)-d_ionize(1:end-step+1,:)+d_tbr(1:end-step+1,:)];  % N*ns matrix: the inner (step) shells are zero 
 
 gate=1;
 
@@ -125,12 +136,12 @@ else
     d_high2=[zeros(k,1);d_CT2(1:end-k)];  % N*1 colume   
 end
  
- d_ion2=-d_CT2;
+% d_ion2=-d_CT2;
  d_eden2=-d_CT2;
  
- 
- d_ion=d_ion+d_ion2-k_DR*n_ion.*eden;
- d_eden=d_eden+d_eden2;
+
+ d_eden=d_eden+d_eden2-k_DR*n_ion.*eden;
+ d_ion=d_eden;
  
  d_nDen=d_nDen-k_pd*nDen';
  
