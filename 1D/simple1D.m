@@ -1,5 +1,5 @@
 
-function [t,rs, edens, n_ions, n_highs, nDens,Tn, r0, tau]=simple1D(N,k,dp,n0,sigma,tspan,gamma1,gamma2,k_pd,k_DR,visualize)
+function [t,rs, edens, n_ions, n_highs, nDens,Tn, r0, tau, ns]=simple1D(N,k,dp,n0,sigma,tspan,gamma1,gamma2,k_pd,k_DR,visualize)
 close all
 
 %% define self-similar expanding shells  
@@ -18,7 +18,7 @@ end
 
 r_z=s/max(s); % normalize
 
-n=[1:length(s)];
+n=[1:length(s)-1];
 Tn=tau*((1+(t1/tau)^2).^(n)-1).^0.5;  % the overlapping times can be calculated by s_1(t_n)=s_n(t_1). ignoring Tn=0.
 
 
@@ -80,7 +80,7 @@ nDen=reshape(nDen,[ns,N]); % ns x N martrix or row
 u=t/(t^2+tau^2).*r; % expanding volecity at r
 
 k_CT=gamma1*u;  % calculate the charge transfer rate: larger speed (r) causes more charge transfer within that shell at given amount of time 
-k_CT2=gamma2*u;
+k_CT2=gamma2;
 
 k_ion=10; % ionization
 k_tbr=10;  % three body recombination
@@ -162,8 +162,7 @@ n_ions=y(:,m+1:m+N); m=m+N; % Nx1 colume;  NO^+ ion
 n_highs=y(:,m+1:m+N);  m=m+N; % Nx1 colume;  long-lived NO^** Rydberg 
 nDens=y(:,m+1:m+ns*N); m=m+ns*N; % Nx1 colume;  short-lived NO^* Rydberg
 
-%nDens=reshape(nDens,[ns,N]); % ns x N martrix or row
-
+%nDens=sum(reshape(nDens,[ns,N]),1); % ns x N martrix or row
 
 
 
