@@ -4,9 +4,9 @@ clc
 N=100% number of shells 
 k=round(0.1*N)+1 %k=round(0.1*N)+1; % k is off number of shells between NO^** and NO^+. set to approximately 10% of total shells 
 n0=50;
-dp=0.2% peak density
+dp=0.1% peak density
 gamma1=100
-gamma2=100
+gamma2=10
 k_pd=0.1;
 k_DR=0.1;
 
@@ -24,7 +24,7 @@ tspan=[0:dt:t_final];
 a=2;
 b=1;
 
-M=100;
+M=50;
 
 
 filename=['2D/'  'den=' num2str(dp), ' n0=' num2str(n0) ' a=', num2str(a), ' b=', num2str(b),  ' gamma1=' num2str(gamma1), ' gamma2=' num2str(gamma2) ' k_pd=' num2str(k_pd)];
@@ -44,14 +44,15 @@ NDens=zeros(length(tspan),N,M);
 
 for m=[1:M]
     sigma=R(m);
-    [t,rs, edens, n_ions, n_highs, nDens, Tn, r0, tau]=simple1D(N,k,dp,n0,sigma,tspan, gamma1,gamma2,k_pd,k_DR,visualize);
+    [t,rs, edens, n_ions, n_highs, nDens, Tn, r0, tau, ns]=simple1D(N,k,dp,n0,sigma,tspan, gamma1,gamma2,k_pd,k_DR,visualize);
     [x,y] = pol2cart(theta(m),rs);
     X(:,:,m)=x;
     Y(:,:,m)=y;
 
     N_ions(:,:,m)=n_ions;
     N_highs(:,:,m)=n_highs;
-    NDens(:,:,m)=nDens;
+    
+    NDens(:,:,m)=sum(reshape(nDens,[],ns,N),2); 
     
 end 
 
