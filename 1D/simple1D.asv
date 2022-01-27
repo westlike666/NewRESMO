@@ -80,10 +80,10 @@ nDen=reshape(nDen,[ns,N]); % ns x N martrix or row
 u=t/(t^2+tau^2).*r; % expanding volecity at r
 
 k_CT=gamma1*u;  % calculate the charge transfer rate: larger speed (r) causes more charge transfer within that shell at given amount of time 
-k_CT2=gamma2*u;
+k_CT2=gamma2;
 
-k_ion=0.1; % ionization
-k_tbr=0.1;  % three body recombination
+k_ion=10; % ionization
+k_tbr=10;  % three body recombination
 
 
 %e + NO^+ +NO^* == 2NO^**   with k_CT
@@ -162,7 +162,7 @@ n_ions=y(:,m+1:m+N); m=m+N; % Nx1 colume;  NO^+ ion
 n_highs=y(:,m+1:m+N);  m=m+N; % Nx1 colume;  long-lived NO^** Rydberg 
 nDens=y(:,m+1:m+ns*N); m=m+ns*N; % Nx1 colume;  short-lived NO^* Rydberg
 
-%nDens=reshape(nDens,[ns,N]); % ns x N martrix or row
+nDens=reshape(nDens,[ns,N]); % ns x N martrix or row
 
 
 
