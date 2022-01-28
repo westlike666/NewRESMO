@@ -101,8 +101,8 @@ n_high=y(m+1:m+N);  m=m+N; % Nx1 colume;  long-lived NO^** Rydberg
 nDen=y(m+1:m+ns*N); m=m+ns*N; % Nx1 colume;  short-lived NO^* Rydberg
 T=y(m+1); m=m+1; % scaler: electron temperature 
 
-
-V=a*b*c*sin(phi)*2*pi.*r.^3/3;  % dV =abc*r^2*sin(phi)*d_phi*d_theta*dr  integral over dr from 0 to r and d
+%infintesmall volume dV=sin(phi) r^2 dr d_phi d_theta
+V=sin(phi)*2*pi.*r.^3/3;  % dV =abc*r^2*sin(phi)*d_phi*d_theta*dr: integrate over dr from 0 to r and d_theta from 0 to 2pi
 
 nDen=reshape(nDen,[ns,N]); % ns x N martrix or row
 
