@@ -1,5 +1,6 @@
 clear
 close all
+clc
 
 %% define initial constant
 kB = 1.3806504e-23;                 % #m2 kg s-2 K-1;J K-1; 8.62e-5 #eV K-1,
@@ -10,6 +11,11 @@ kBm=kB/m_NO*1e12/1e18; %k_b / m_NO #um2 ns-2 K-1
 
 %kBm=0.0002770924685030197; %k_b / m_NO #um2 ns-2 K-1
 sigma=1000;
+
+a=1000;
+b=1000;
+c=2000;
+
 sigma_z=sigma;  % Gaussian width convert from mm to um.
 
 T_e=5; T_i=0;   % K
@@ -45,9 +51,6 @@ dp=1; % peak density
 n0=50
 den0=dp*exp(-([0,r_z(2:end-1)].^2)./(2.*sigma_z^2));  % 1*N row
 
-%scale the density along radius
-
-
 
 N0=n0*ones(1,N);
 [PF,eden,n_Ryd]=penningfraction(N0,den0); % density in um^-3
@@ -60,7 +63,7 @@ n_ion=eden;
 
 n_high=0*n_ion; % long-lived NO^**
 
-expand=0;  % expand the NO^* Rydberg into different levels 
+expand=1;  % expand the NO^* Rydberg into different levels 
 if expand
      f=@(x)5.95*x.^5;                % This is the penning fraction distribution
      np=1:fix(n0/sqrt(2));      % Array of n states allowed after Penn ion
@@ -77,33 +80,39 @@ else
      nDen=den0-n_ion;
 end 
 
-r0=r_z';
+r0=r_z'; 
 
-y0=[r_z'; eden'; n_ion'; n_high'; reshape(nDen,[ns*N,1]);T_e];
+y0=[r0; eden'; n_ion'; n_high'; reshape(nDen,[ns*N,1]);T_e];
 
+[ni,nf,II,minn,maxn,diffsn]=buildns(nl); 
 
+phi=pi/4;
+d_phi=pi/100;
 
 %% rate equations
 %function dy=ode1D(t,y)
 y=y0;
 t=1000
 
-r=y(1:N);  m=N; % let r represent the outer boundaries of the shell 
+r=y(1:N+1);  m=N+1;% there are N+1 boudaries
 eden=y(m+1:m+N);  m=m+N; % Nx1 colume; electrons 
 n_ion=y(m+1:m+N); m=m+N; % Nx1 colume;  NO^+ ion    
 n_high=y(m+1:m+N);  m=m+N; % Nx1 colume;  long-lived NO^** Rydberg 
 nDen=y(m+1:m+ns*N); m=m+ns*N; % Nx1 colume;  short-lived NO^* Rydberg
 T=y(m+1); m=m+1; % scaler: electron temperature 
 
+
+V=a*b*c*sin(phi)*2*pi.*r.^3/3;  % dV =abc*r^2*sin(phi)*d_phi*d_theta*dr  integral over dr from 0 to r and d
+
 nDen=reshape(nDen,[ns,N]); % ns x N martrix or row
 
-u=t/(t^2+tau^2).*r; % expanding volecity at r
-
+U=t/(t^2+tau^2).*r; % expanding volecity at r
+u=U(1:end-1);
 
 k_ion=kION(nl,T); % 1* ns row.   ionization
 k_tbr=kTBR(nl,T);  % 1* ns row.   three body recombination
 
-
+k_n_np=knnp(ni,nf,II,minn,maxn,diffsn,T);   % ns * ns matrix
 
 k_pd=kPD(nl); % 1* ns row.  predissociation
 k_DR=kDR(T); % scaler.  dissociative recombination 
@@ -112,6 +121,8 @@ k_DR=kDR(T); % scaler.  dissociative recombination
 
 k_CT=100*k_tbr.^(2/3).*u;  %  N*ns matrix. charge transfer rate: larger speed (r) causes more charge transfer within that shell at given amount of time;
 k_CT2=100*max(k_tbr).^(2/3).*u; % N*1 colume, since NO^** is not distinguished by pqn 
+
+
 
 
 %%
@@ -136,6 +147,16 @@ d_ionize=k_ion.*eden.*[nDen(:,step:end),zeros(ns,step-1)]'; % N*ns matrix: the o
 
 d_tbr=k_tbr.*eden.^3; % N*1 colume
 % d_tbr(1:end-step+1,:) is the overlapping (non-zero) region
+
+d_n_np=sum(k_n_np,2).*nDen.*[zeros(step-1,1),eden(1:end-step+1)'] % ns*N matrix
+
+%d_n_np=sum(k_n_np,2).*nden.*eden'; % ns*N matrix
+
+k_np_n=k_n_np';
+
+d_np_n=k_np_n*nDen.*[zeros(step-1,1),eden(1:end-step+1)'];      % ns*N matrix
+
+
 
 d_CT=k_CT.*n_ion.*[nDen(:,step:end),zeros(ns,step-1)]'; % N*ns matrix: the outer (step) shells are zero
 % d_CT(1:end-step+1,:) is the overlapping (non-zero) region
@@ -172,21 +193,21 @@ end
  d_eden2=-d_CT2;
  
 
- d_eden=d_eden+d_eden2-k_DR*n_ion.*eden % consider also the expansion of volume
+ d_eden=d_eden+d_eden2-k_DR*n_ion.*eden; % consider also the expansion of volume
  d_ion=d_eden;
  
- d_nDen=d_nDen-k_pd.*nDen';
+ d_nDen=d_nDen-k_pd.*nDen'-d_n_np'+d_np_n';
  
 d_high=sum(d_high1,2)+d_high2; % N*1 colums
 
-dT=-2*t/(t^2+tau^2)*T
+dT=-2*t/(t^2+tau^2)*T;
 
 
 
 
 
 
-dy=[u; d_eden; d_ion; d_high; reshape(d_nDen',[N*ns,1]);dT];
+dy=[U; d_eden; d_ion; d_high; reshape(d_nDen',[N*ns,1]);dT];
 %end
 
 
@@ -252,11 +273,11 @@ figure()
 hold on 
 dt=0.1*tau;
 t_final=10*tau;
-for T=[0:dt:t_final]
-    s=y_ana(T,r_z,tau);
+for t=[0:dt:t_final]
+    s=y_ana(t,r_z,tau);
     clf
    % ylim([0 5])
-    t_n=Tn(abs(T-Tn)<dt);   
+    t_n=Tn(abs(t-Tn)<dt);   
     for i=[1:length(s)]
         yline(s(i))
         yline(0.5*(s(i)),'red') % start with k shells off 
