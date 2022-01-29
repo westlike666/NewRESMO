@@ -373,7 +373,7 @@ end
     %value to ensure deactivated states do not affect temperature
     %I guess here a quasi-equalibrium is assumend where dV=0 
     dT=(Ry*sum(sum(D_NDEN_OLD./NL.^2.*VOL))-1.5*kB*T*sum(sum(D_EDEN_OLD.*V)) ...
-        -sum(sum(0.98263e-20*V.*eden.*(UX.*D_UX + UY.*D_UY + UZ.*D_UZ)))/3  )...
+        -sum(sum(0.98263e-20*V.*eden.*(UX.*D_UX + UY.*D_UY + UZ.*D_UZ)))/3  )... % where is 0.98263 ffrom ?
         /(1.5*kB*sum(sum(eden.*V)));
   
 %     Energy=-Ry*sum(nden./(NL.^2).*VOL)+1.5*kB*T*sum(eden.*V)
