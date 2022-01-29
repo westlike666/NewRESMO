@@ -22,7 +22,7 @@ T_e=5; T_i=0;   % K
 
 tau=(1/kBm*sigma_z^2/(T_e+T_i))^0.5;  % ns
 
-N=3;
+N=30;
 s0=1;
 %tau=1;
 k=round(0.1*N)+1; % k is off number of shells between NO^** and NO^+. set to approximately 20% of total shells 
@@ -92,7 +92,7 @@ d_phi=pi/100;
 %% rate equations
 %function dy=ode1D(t,y)
 y=y0;
-t=1000
+t=100
 
 r=y(1:N+1);  m=N+1;% there are N+1 boudaries
 eden=y(m+1:m+N);  m=m+N; % Nx1 colume; electrons 
@@ -101,13 +101,22 @@ n_high=y(m+1:m+N);  m=m+N; % Nx1 colume;  long-lived NO^** Rydberg
 nDen=y(m+1:m+ns*N); m=m+ns*N; % Nx1 colume;  short-lived NO^* Rydberg
 T=y(m+1); m=m+1; % scaler: electron temperature 
 
-%infintesmall volume dV=sin(phi) r^2 dr d_phi d_theta
-V=sin(phi)*2*pi.*r.^3/3;  % dV =abc*r^2*sin(phi)*d_phi*d_theta*dr: integrate over dr from 0 to r and d_theta from 0 to 2pi
+
 
 nDen=reshape(nDen,[ns,N]); % ns x N martrix or row
 
 U=t/(t^2+tau^2).*r; % expanding volecity at r
 u=U(1:end-1);
+
+%infintesmall volume dV=sin(phi) r^2 dr d_phi d_theta, integrate over dr
+%from 0 to r and d_theta from 0 to 2pi to find total volume at r(theta),
+%the diff gave the volume of slices betwenn shell boundaries
+
+V=2*pi/3*sin(phi)*d_phi*(diff(r.^3)); % N*1 colume volume of each shell
+
+dV=2*pi*sin(phi)*d_phi*(diff(r.^2.*U)); 
+
+
 
 k_ion=kION(nl,T); % 1* ns row.   ionization
 k_tbr=kTBR(nl,T);  % 1* ns row.   three body recombination
@@ -148,7 +157,7 @@ d_ionize=k_ion.*eden.*[nDen(:,step:end),zeros(ns,step-1)]'; % N*ns matrix: the o
 d_tbr=k_tbr.*eden.^3; % N*1 colume
 % d_tbr(1:end-step+1,:) is the overlapping (non-zero) region
 
-d_n_np=sum(k_n_np,2).*nDen.*[zeros(step-1,1),eden(1:end-step+1)'] % ns*N matrix
+d_n_np=sum(k_n_np,2).*nDen.*[zeros(step-1,1),eden(1:end-step+1)']; % ns*N matrix
 
 %d_n_np=sum(k_n_np,2).*nden.*eden'; % ns*N matrix
 
@@ -193,12 +202,13 @@ end
  d_eden2=-d_CT2;
  
 
- d_eden=d_eden+d_eden2-k_DR*n_ion.*eden; % consider also the expansion of volume
+ d_eden=d_eden+d_eden2-k_DR*n_ion.*eden-eden.*dV./V; % consider also the expansion of volume
  d_ion=d_eden;
  
- d_nDen=d_nDen-k_pd.*nDen'-d_n_np'+d_np_n';
+ d_nDen=d_nDen-k_pd.*nDen'-d_n_np'+d_np_n'-d_nDen.*dV./V; % assume Rydberg shells expand, 
+ % d_nDen=d_nDen-k_pd.*nDen'-d_n_np'+d_np_n'; % the Rydberg shells do not expand, 
  
-d_high=sum(d_high1,2)+d_high2; % N*1 colums
+d_high=sum(d_high1,2)+d_high2-d_high.*dV./V; % N*1 colums, the 1/8 factor cancels in dV/V
 
 dT=-2*t/(t^2+tau^2)*T;
 
