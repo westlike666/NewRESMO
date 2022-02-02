@@ -81,8 +81,9 @@ else
 end 
 
 r0=r_z'; 
+u0=0*r0;
 
-y0=[r0; eden'; n_ion'; n_high'; reshape(nDen,[ns*N,1]);T_e];
+y0=[r0; u0; eden'; n_ion'; n_high'; reshape(nDen,[ns*N,1]);T_e];
 
 [ni,nf,II,minn,maxn,diffsn]=buildns(nl); 
 
@@ -92,9 +93,10 @@ d_phi=pi/100;
 %% rate equations
 %function dy=ode1D(t,y)
 y=y0;
-t=100
+t=10*tau;
 
 r=y(1:N+1);  m=N+1;% there are N+1 boudaries
+U=y(m+1:m+N+1); m=m+N+1;
 eden=y(m+1:m+N);  m=m+N; % Nx1 colume; electrons 
 n_ion=y(m+1:m+N); m=m+N; % Nx1 colume;  NO^+ ion    
 n_high=y(m+1:m+N);  m=m+N; % Nx1 colume;  long-lived NO^** Rydberg 
@@ -105,7 +107,16 @@ T=y(m+1); m=m+1; % scaler: electron temperature
 
 nDen=reshape(nDen,[ns,N]); % ns x N martrix or row
 
-U=t/(t^2+tau^2).*r; % expanding volecity at r
+rr=r(1:end-1);
+%dux=mean((-kBm*T*(diff_rho./eden(1:end-1))./diff_rx)./RX(2:end));
+
+dU=mean(-kBm*T*diff(eden)./eden(1:end-1)./diff(rr)./rr(1:end-1))*r;
+
+du=-kBm*T*diff(eden)./eden(1:end-1)./diff(rr)./rr(1:end-1).*rr(1:end-1); 
+dU=[0;du];
+
+%U=t/(t^2+tau^2).*r; % expanding volecity at r
+
 u=U(1:end-1);
 
 %infintesmall volume dV=sin(phi) r^2 dr d_phi d_theta, integrate over dr
@@ -131,6 +142,7 @@ k_DR=kDR(T); % scaler.  dissociative recombination
 k_CT=100*k_tbr.^(2/3).*u;  %  N*ns matrix. charge transfer rate: larger speed (r) causes more charge transfer within that shell at given amount of time;
 k_CT2=100*max(k_tbr).^(2/3).*u; % N*1 colume, since NO^** is not distinguished by pqn 
 
+%k_CT2=diff(r.^2).*nl;
 
 
 
@@ -157,13 +169,13 @@ d_ionize=k_ion.*eden.*[nDen(:,step:end),zeros(ns,step-1)]'; % N*ns matrix: the o
 d_tbr=k_tbr.*eden.^3; % N*1 colume
 % d_tbr(1:end-step+1,:) is the overlapping (non-zero) region
 
-d_n_np=sum(k_n_np,2).*nDen.*[zeros(step-1,1),eden(1:end-step+1)']; % ns*N matrix
+d_n_np=sum(k_n_np,2).*nDen.*[zeros(1,step-1),eden(1:end-step+1)']; % ns*N matrix
 
 %d_n_np=sum(k_n_np,2).*nden.*eden'; % ns*N matrix
 
 k_np_n=k_n_np';
 
-d_np_n=k_np_n*nDen.*[zeros(step-1,1),eden(1:end-step+1)'];      % ns*N matrix
+d_np_n=k_np_n*nDen.*[zeros(1,step-1),eden(1:end-step+1)'];      % ns*N matrix
 
 
 
@@ -201,23 +213,29 @@ end
 % d_ion2=-d_CT2;
  d_eden2=-d_CT2;
  
-
- d_eden=d_eden+d_eden2-k_DR*n_ion.*eden-eden.*dV./V; % consider also the expansion of volume
- d_ion=d_eden;
+ D_eden_old=d_eden+d_eden2; % to calculate temperature before energy loss
  
- d_nDen=d_nDen-k_pd.*nDen'-d_n_np'+d_np_n'-d_nDen.*dV./V; % assume Rydberg shells expand, 
- % d_nDen=d_nDen-k_pd.*nDen'-d_n_np'+d_np_n'; % the Rydberg shells do not expand, 
+ D_eden=d_eden+d_eden2-k_DR*n_ion.*eden-eden.*dV./V; % consider also the expansion of volume
  
-d_high=sum(d_high1,2)+d_high2-d_high.*dV./V; % N*1 colums, the 1/8 factor cancels in dV/V
+ %d_eden=d_eden+d_eden2-k_DR*n_ion.*eden-eden.*dV./V; 
+ D_ion=D_eden;
+ 
+ D_nDen_old=d_nDen-d_n_np'+d_np_n'; % to calculate temperature before energy loss
+ 
+ D_nDen=d_nDen-d_n_np'+d_np_n'-k_pd.*nDen'-nDen'.*dV./V; % assume Rydberg shells expand, 
+ 
+ d_high=sum(d_high1,2)+d_high2; % N*1 colums, 
 
-dT=-2*t/(t^2+tau^2)*T;
+ D_high=d_high-n_high.*dV./V; % the 1/8 factor cancels in dV/V
+
+ dT1=(Ry*sum(sum(D_nDen_old./nl.^2.*V))-1.5*kB*T*sum(D_eden_old.*V)) /(1.5*kB*sum(eden.*V)); % the total energy conserve before the dissipation. Ry and kB both in S.I. unit 
+
+ dT2=-2*t/(t^2+tau^2)*T; % temperature change due to expansion
+ 
+ dT=dT1+dT2;
 
 
-
-
-
-
-dy=[U; d_eden; d_ion; d_high; reshape(d_nDen',[N*ns,1]);dT];
+dy=[U;dU; D_eden; D_ion; D_high; reshape(D_nDen',[N*ns,1]);dT];
 %end
 
 
