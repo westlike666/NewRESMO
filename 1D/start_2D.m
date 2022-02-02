@@ -21,8 +21,8 @@ tspan=[0:dt:t_final];
 % r(theta)= a*b/sqrt(b^2 cos)
 
 %assume a>b
-a=2;
-b=1;
+a=1;
+b=0.5;
 
 M=50;
 
