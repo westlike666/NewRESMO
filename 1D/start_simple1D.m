@@ -1,7 +1,7 @@
 close all
 clear
 clc
-N=50% number of shells 
+N=10% number of shells 
 dp=0.01 % peak density
 sigma=1 %
 gamma1=1
