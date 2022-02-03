@@ -15,7 +15,7 @@ a0=5.2917721092e-5;     % bohr radius in um
 
 sigma_z=sigma;  % Gaussian width convert from mm to um.
 
-T_e=10; T_i=0;   % K
+T_e=5; T_i=0;   % K
 
 tau=(1/kBm*sigma^2/(T_e+T_i))^0.5;  % ns  let sigma_0 equals to 1000um 
 
@@ -47,6 +47,7 @@ r_z=r_z*env*sigma; % N+1 columes
 %n0=50
 
 den0=dp*exp(-([0,r_z(2:end-1)].^2)./(2.*sigma_z^2));  % 1*N row
+%den0=1000*dp*exp(-([0,r_z(2:end-1)].^2)./(2.*sigma_z^2))./(2*pi)^0.5./sigma_z;  % 1*N row
 
 N0=n0*ones(1,N);
 [PF,eden,n_Ryd]=penningfraction(N0,den0); % density in um^-3
@@ -101,7 +102,7 @@ T=y(m+1); m=m+1; % scaler: electron temperature
 
 nDen=reshape(nDen,[ns,N]); % ns x N martrix or row
 
-%U=t/(t^2+tau^2).*r; % expanding volecity at r: N+1 rows
+U=t/(t^2+tau^2).*r; % expanding volecity at r: N+1 rows
 u=U(1:end-1);
 rr=r(1:end-1);
 
@@ -120,7 +121,7 @@ V=2*pi/3*d_phi*(diff(r.^3)); % N*1 colume volume of each shell
 
 dV=2*pi*d_phi*(diff(r.^2.*U)); 
 
-dV=0;
+%dV=0;
 
 k_ion=kION(nl,T); % 1* ns row.   ionization
 k_tbr=kTBR(nl,T); % 1* ns row.   three body recombination
@@ -231,7 +232,7 @@ end
  
  dT=dT1+dT2;
 
- %dT=0;
+ dT=dT2;
 
 dy=[U; dU; D_eden; D_ion; D_high; reshape(D_nDen',[N*ns,1]);dT];
 
