@@ -121,7 +121,7 @@ V=2*pi/3*d_phi*(diff(r.^3)); % N*1 colume volume of each shell
 
 dV=2*pi*d_phi*(diff(r.^2.*U)); 
 
-%dV=0;
+dV=0;
 
 k_ion=kION(nl,T); % 1* ns row.   ionization
 k_tbr=kTBR(nl,T); % 1* ns row.   three body recombination
@@ -140,8 +140,8 @@ k_DR=kDR(T); % scaler.  dissociative recombination
 k_CT=gamma1.*diff(r).*(a0*nl.^2);  %  N*ns matrix. charge transfer rate: larger speed (r) causes more charge transfer within that shell at given amount of time;
 k_CT2=gamma2.*diff(r).*(a0.^2); % N*1 colume, since NO^** is not distinguished by pqn 
 
-% k_CT=gamma1./u;
-% k_CT2=gamma2./u;
+%  k_CT=gamma1;
+%  k_CT2=gamma2;
 %%
 
 
