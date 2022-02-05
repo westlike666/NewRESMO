@@ -5,7 +5,7 @@ N=100% number of shells
 k=round(0.1*N)+1 %k=round(0.1*N)+1; % k is off number of shells between NO^** and NO^+. set to approximately 10% of total shells 
 n0=50;
 dp=0.1;  %   peak density in um^-3 or 1e12 cm^-3
-gamma1=1;
+gamma1=0.1;
 gamma2=1;
 
 save=false
