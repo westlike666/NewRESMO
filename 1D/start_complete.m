@@ -5,8 +5,8 @@ N=100% number of shells
 k=round(0.1*N)+1 %k=round(0.1*N)+1; % k is off number of shells between NO^** and NO^+. set to approximately 10% of total shells 
 n0=50;
 dp=0.1;  %   peak density in um^-3 or 1e12 cm^-3
-gamma1=0.1;
-gamma2=1;
+gamma1=0.01;
+gamma2=0;
 
 save=false
 
@@ -27,7 +27,7 @@ b=0.5*1000;
 
 env=5;  % sigma environment
 
-M=100;
+M=50;
 
 
 %filename=['2D/'  'den=' num2str(dp), ' n0=' num2str(n0) ' a=', num2str(a), ' b=', num2str(b),  ' gamma1=' num2str(gamma1), ' gamma2=' num2str(gamma2) ' k_pd=' num2str(k_pd)];
