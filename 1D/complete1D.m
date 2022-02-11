@@ -211,14 +211,16 @@ end
 % d_ion2=-d_CT2;
  d_eden2=-d_CT2;
  
- D_eden_old=d_eden+d_eden2; % to calculate temperature before energy loss
+ %D_eden_old=d_eden+d_eden2; % to calculate temperature before energy loss
+ D_eden_old=sum(d_ionize-d_tbr,2);
  
  D_eden=d_eden+d_eden2-k_DR*n_ion.*eden-eden.*dV./V; % consider also the expansion of volume
  
  %d_eden=d_eden+d_eden2-k_DR*n_ion.*eden-eden.*dV./V; 
  D_ion=D_eden;
  
- D_nDen_old=d_nDen-d_n_np'+d_np_n'; % to calculate temperature before energy loss
+% D_nDen_old=d_nDen-d_n_np'+d_np_n'; % to calculate temperature before energy loss
+ D_nDen_old=[zeros(step-1,ns);-d_ionize(1:end-step+1,:)+d_tbr(1:end-step+1,:)]-d_n_np'+d_np_n';  % N*ns matrix: the inner (step) shells are zero 
  
  D_nDen=d_nDen-d_n_np'+d_np_n'-k_pd.*nDen'-nDen'.*dV./V; % assume Rydberg shells expand, 
  %D_nDen=d_nDen-d_n_np'+d_np_n'-k_pd.*nDen' % assume Rydberg not expand, 
@@ -235,7 +237,7 @@ end
 %      dT1=0;
 %  end
  
- dT=dT2;
+ dT=dT1+dT2;
 
 
 dy=[U; dU; D_eden; D_ion; D_high; reshape(D_nDen',[N*ns,1]);dT];
