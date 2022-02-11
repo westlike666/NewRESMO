@@ -1,5 +1,5 @@
 
-function [t,rs, edens, n_ions, n_highs, nDens,Ts, Tn, r0, tau, ns]=complete1D(N,k,dp,n0,sigma,env,tspan,gamma1,gamma2, phi, d_phi)
+function [t,rs, edens, n_ions, n_highs, nDens,Ts, Tn, r0, tau, ns]=complete1D(N,k,dp,n0,all_pqn,sigma,env,tspan,gamma1,gamma2, phi, d_phi)
 
 %% define initial constant
 kB = 1.3806504e-23;                 % #m2 kg s-2 K-1;J K-1; 8.62e-5 #eV K-1,
@@ -60,12 +60,12 @@ n_ion=eden;
 
 n_high=0*n_ion; % long-lived NO^**
 
-expand=0;  % expand the NO^* Rydberg into different levels 
+expand=all_pqn;  % expand the NO^* Rydberg into different levels 
 if expand
      f=@(x)5.95*x.^5;                % This is the penning fraction distribution
-     np=1:fix(n0/sqrt(2));      % Array of n states allowed after Penn ion
+     np=10:fix(n0/sqrt(2));      % Array of n states allowed after Penn ion
      ind=1:length(np); 
-     nl=[1:100];
+     nl=[10:80];
      ns=length(nl);
      n_dist=0*nl;
      n_dist(ind)=f(np/n0)/sum(f(np/n0));% dividing by the sum normalizes the function
@@ -111,7 +111,7 @@ dU=mean(-kBm*T*diff(eden)./eden(1:end-1)./diff(rr)./rr(1:end-1))*r;  % averaging
 
 % du=-kBm*T*diff(eden)./eden(1:end-1)./diff(rr)./rr(1:end-1).*rr(1:end-1); 
 % dU=[du(1);du; du(end)];
-%dU=0*dU;
+dU=0*dU;
 
 %infintesmall volume dV=sin(phi) r^2 dr d_phi d_theta, integrate over dr
 %from 0 to r and d_theta from 0 to 2*pi to find total volume at r(theta),
@@ -119,15 +119,17 @@ dU=mean(-kBm*T*diff(eden)./eden(1:end-1)./diff(rr)./rr(1:end-1))*r;  % averaging
 
 V=2*pi/3*d_phi*(diff(r.^3)); % N*1 colume volume of each shell
 
-dV=2*pi*d_phi*(diff(r.^2.*U)); 
-
-dV=0;
+if all_pqn
+    dV=2*pi*d_phi*(diff(r.^2.*U)); 
+else
+    dV=0;
+end
 
 k_ion=kION(nl,T); % 1* ns row.   ionization
 k_tbr=kTBR(nl,T); % 1* ns row.   three body recombination
 
 %k_n_np=zeros(ns,ns);
-k_n_np=knnp(ni,nf,II,minn,maxn,diffsn,T);   % ns * ns matrix
+k_n_np=knnp(ni,nf,II,minn,maxn,diffsn,T);  % ns * ns matrix
 
 k_pd=kPD(nl); % 1* ns row.  predissociation
 k_DR=kDR(T); % scaler.  dissociative recombination 
@@ -225,14 +227,16 @@ end
 
  D_high=d_high-n_high.*dV./V; % the 1/8 factor cancels in dV/V
 
- dT1=(Ry*sum(sum(D_nDen_old./nl.^2.*V))-1.5*kB*T*sum(D_eden_old.*V)) /(1.5*kB*sum(eden.*V)); % the total energy conserve before the dissipation. Ry and kB both in S.I. unit 
+ dT1=(Ry*sum(sum(D_nDen_old./nl.^2.*V))-1.5*kB*T*sum(D_eden_old.*V))./(1.5*kB*sum(eden.*V)); % the total energy conserve before the dissipation. Ry and kB both in S.I. unit 
 
  dT2=-2*t/(t^2+tau^2)*T; % temperature change due to expansion
  
+%  if isreal(dT1)==0
+%      dT1=0;
+%  end
  
- dT=dT1+dT2;
-
  dT=dT2;
+
 
 dy=[U; dU; D_eden; D_ion; D_high; reshape(D_nDen',[N*ns,1]);dT];
 
