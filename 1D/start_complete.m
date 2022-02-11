@@ -11,8 +11,8 @@ clc
 % There is a trade-off of computation cost between searching SOC conditions
 % and showing 2D bifurcation images 
 
-%purpose='soc';
-purpose='geo'
+purpose='soc';
+%purpose='geo'
 
 if purpose=='soc'
     all_pqn=true;  M=1;
@@ -21,30 +21,29 @@ if purpose=='soc'
     % This configs means it only run the 1D model once (M=1), but will populate all the pqn from 30 to 80 during the calculation 
     % Use this set-up to quickly search the conditions of self-organized-critical without genrating bifurcation images.  
 elseif purpose=='geo'
-     all_pqn=false; M=50
+     all_pqn=false; M=50;
     % This configs will run the model 50 times at 50 azimuth angles to construct 2D images
     % Considering all pricipal quantum number in [30,80] is not recommnded due to computation time  
     % Use this set-up to genrate bifurcation images.  
 end 
 
-N=100 % number of shells 
+N=50 % number of shells 
 
 
 n0=50; % initial principal quanutm number  
-dp=0.1;  %   peak density in um^-3 or 1e12 cm^-3
-gamma1=0.01; % This is the magnitude of charge transfer rate: k_CT=gamma1.*dr.*(a0*n.^2); The dimesion is arbitary
+dp=0.5;  %   peak density in um^-3 or 1e12 cm^-3
+gamma1=0.1; % This is the magnitude of charge transfer rate: k_CT=gamma1.*dr.*(a0*n.^2); The dimesion is arbitary
 
 save=false % whether so save images as movie
 
-
-
+t_final=2000;  % evolution time in ns 
+dt=1; % steps of time to demonstrate
 
 %% parameters that are suggested to be fixed 
 gamma2=0; % For now ignoring the charge transfer with high Rydberg: NO^+ e + NO** -> 2NO**
 
 cmax=0.012; % color axis limit 
-t_final=1e5;  % evolution time in ns 
-dt=1e3; % steps of time to demonstrate
+
 tspan=[0:dt:t_final]; 
 
 k=round(0.1*N)+1; %k=round(0.1*N)+1; % k is off number of shells between NO^** and NO^+. set to approximately 10% of total shells 
