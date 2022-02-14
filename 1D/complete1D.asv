@@ -122,8 +122,8 @@ V=2*pi/3*d_phi*(diff(r.^3)); % N*1 colume volume of each shell
 if all_pqn
     dV=2*pi*d_phi*(diff(r.^2.*U)); 
 else
-    dV=2*pi*d_phi*(diff(r.^2.*U)); 
- %   dV=0;
+       dV=2*pi*d_phi*(diff(r.^2.*U)); 
+    dV=0;
 end
 
 k_ion=kION(nl,T); % 1* ns row.   ionization
@@ -223,8 +223,8 @@ end
 % D_nDen_old=d_nDen-d_n_np'+d_np_n'; % to calculate temperature before energy loss
  D_nDen_old=[zeros(step-1,ns);-d_ionize(1:end-step+1,:)+d_tbr(1:end-step+1,:)]-d_n_np'+d_np_n';  % N*ns matrix: the inner (step) shells are zero 
  
- %D_nDen=d_nDen-d_n_np'+d_np_n'-k_pd.*nDen'-nDen'.*dV./V; % assume Rydberg shells expand, 
- D_nDen=d_nDen-d_n_np'+d_np_n'-k_pd.*nDen'; % assume Rydberg not expand, 
+ D_nDen=d_nDen-d_n_np'+d_np_n'-k_pd.*nDen'-nDen'.*dV./V; % assume Rydberg shells expand, 
+ %D_nDen=d_nDen-d_n_np'+d_np_n'-k_pd.*nDen' % assume Rydberg not expand, 
  
  d_high=sum(d_high1,2)+d_high2; % N*1 colums, 
 

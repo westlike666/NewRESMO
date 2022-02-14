@@ -1,5 +1,6 @@
 % This code can produce the 2D results of the shell model:
 % After setting up the parameters, hit Run and wait  
+% The units in this code:  um for length ; ns for time ; Others are in S.I.units
 
 close all
 clear
@@ -16,30 +17,34 @@ purpose='soc';
 
 if purpose=='soc'
     all_pqn=true;  M=1;
-    % all_pqn decides wether to consder all principal quanutum number within [30,80] 
+    % all_pqn decides wether to consder all principal quanutum number within [10,80] 
     % M is the number of azimuth angles in the ellipse spreading from 0 to 2*pi: M=1 produce a 1D result
     % This configs means it only run the 1D model once (M=1), but will populate all the pqn from 30 to 80 during the calculation 
     % Use this set-up to quickly search the conditions of self-organized-critical without genrating bifurcation images.  
 elseif purpose=='geo'
      all_pqn=false; M=50;
     % This configs will run the model 50 times at 50 azimuth angles to construct 2D images
-    % Considering all pricipal quantum number in [30,80] is not recommnded due to computation time  
+    % Considering all pricipal quantum number in [10,80] is not recommnded due to computation time  
     % Use this set-up to genrate bifurcation images.  
+    % The collapse of pqn will not contain the n to n' decay that usually act as a heating process. Thus the temperature  
 end 
 
-N=50 % number of shells 
+N=100 % number of shells 
 
 
-n0=50; % initial principal quanutm number  
-dp=0.5;  %   peak density in um^-3 or 1e12 cm^-3
-gamma1=0.1; % This is the magnitude of charge transfer rate: k_CT=gamma1.*dr.*(a0*n.^2); The dimesion is arbitary
+n0=80; % initial principal quanutm number  
+dp=0.04;  %   peak density in um^-3 or 1e12 cm^-3
+gamma1=0.01; % This is the magnitude of charge transfer rate: k_CT=gamma1.*dr.*(a0*n.^2); The dimesion is arbitary
 
-save=false % whether so save images as movie
+tosave=true % whether so save data and images. Set to be true for long simulation (t>2000 ns)
 
-t_final=2000;  % evolution time in ns 
-dt=1; % steps of time to demonstrate
+t_final=10000;  % evolution time in ns 
+dt=100; % steps of time to demonstrate. This does not affect the ode calculation procedure.
 
 %% parameters that are suggested to be fixed 
+
+
+
 gamma2=0; % For now ignoring the charge transfer with high Rydberg: NO^+ e + NO** -> 2NO**
 
 cmax=0.012; % color axis limit 
@@ -61,8 +66,9 @@ b=0.5*1000; % height of ellipse.
 env=5;  % sigma environment of density distribution 
 
 
-%filename=['2D/'  'den=' num2str(dp), ' n0=' num2str(n0) ' a=', num2str(a), ' b=', num2str(b),  ' gamma1=' num2str(gamma1), ' gamma2=' num2str(gamma2) ' k_pd=' num2str(k_pd)];
-
+filename=['n0=' num2str(n0) ' den=' num2str(dp)  ' N=' num2str(N) ' t=' num2str(t_final) 'ns' ' gamma1=' num2str(gamma1) ];
+filename=replace(filename, '.', 'p');
+path=[ 'results/' filename]
 
 tot_angle=2*pi; % the ploar angle run from 0 to pi/2*pi, meaning the results representing the upper hemisphere/ shpere
 Phi=linspace(0,tot_angle,M); 
@@ -76,7 +82,7 @@ N_ions=zeros(length(tspan),N,M);
 N_highs=zeros(length(tspan),N,M);
 NDens=zeros(length(tspan),N,M);
 
-
+%% Run ordinary differatial equation solver for M times
 
 for m=[1:M]
     sigma=R(m);
@@ -94,54 +100,67 @@ for m=[1:M]
 %     N_highs(:,:,m)=n_highs./diff(rs,1,2);    
 %     NDens(:,:,m)=sum(reshape(nDens./diff(rs,1,2),[],ns,N),2); 
     
-end 
-%%
- t=t/1000; % converting time from ns to um
+end
+
+t=t/1000; % converting time from ns to um
+
+%% Plotting 1D results 
+
 
  if purpose=='soc'
      Vs=2*pi/3*d_phi*(diff(Rs.^3,1,2)); 
  elseif purpose=='geo'
-     Vs=1; 
+     %Vs=1; 
+     Vs=2*pi/3*d_phi*(diff(Rs.^3,1,2)); 
  end
-
+ 
+ 
  tot_ions=sum(sum(N_ions.*Vs,2),3);
  tot_nDens=sum(sum(NDens.*Vs(1,:,:),2),3);
  tot_highs=sum(sum(N_highs.*Vs/8,2),3);  % 1/2 rs yields 1/8 Vs
  
 figure()
 
+sgtitle(['n0=' num2str(n0) ' den0=' num2str(dp)]) 
 subplot(2,2,1)
-plot(t,tot_nDens)
-ylabel('NO^*')
-%xlabel('us')
+plot(t,tot_ions,t,tot_highs,t,tot_nDens)
+legend('NO^+ ', 'NO^{**}', 'NO^*')
+xlabel('us')
+ylabel('total number')
+
+% subplot(2,2,2)
+% plot(t,tot_ions)
+% ylabel('NO^+ ')
+% %xlabel('us')
+% 
+% subplot(2,2,3)
+% plot(t,tot_highs)
+% ylabel('NO^{**} ')
+% xlabel('us')
 
 subplot(2,2,2)
-plot(t,tot_ions)
-ylabel('NO^+ ')
-%xlabel('us')
-
-subplot(2,2,3)
-plot(t,tot_highs)
-ylabel('NO^{**} ')
-xlabel('us')
-
-figure()
-subplot(2,1,1)
-plot(t,rs)
-ylabel('r/um')
-xlabel('us')
-
-subplot(2,1,2)
 plot(t,Ts)
 ylabel('T_e/K')
 xlabel('us')
 
-% if save
-%      v=VideoWriter([filename '.avi']);
-%      open(v);
-% end
+subplot(2,2,3)
+plot(t,rs)
+ylabel('r/um')
+xlabel('us')
 
-if purpose=='geo'
+if tosave
+    save(path,'tot_ions','tot_nDens','tot_highs','t','rs')
+    saveas(gcf,path,'fig')
+end
+
+%% Plotting 2D results
+
+if M>1
+   if tosave
+     v=VideoWriter([path '.avi']);
+     open(v);
+   end   
+    
     figure()
     for i=[1:length(tspan)]
         T=tspan(i);
@@ -157,7 +176,7 @@ if purpose=='geo'
     %     nn_ions=reshape(N_ions(i,:,:).*Vs(i,:,:),N,M);
     %     nn_highs=reshape(N_highs(i,:,:).*Vs(i,:,:)/8,N,M);
     %     nnDens=reshape(NDens(i,:,:).*Vs(1,:,:),N,M);
-        
+        Lim=3000;
         subplot(2,2,1)
     %    colormap winter
         h=pcolor(x0,y0,nnDens);
@@ -166,7 +185,7 @@ if purpose=='geo'
         set(gca,'Color',cmap(1,:))
      %   caxis([0 cmax])
         title('NO^* Rydberg')
-        %axis(15000*[-1 1 -1 1])
+        axis(Lim*[-1 1 -1 1])
         
         subplot(2,2,2)
     %    colormap turbo
@@ -175,7 +194,7 @@ if purpose=='geo'
         cmap=colormap;
         set(gca,'Color',cmap(1,:))
     %    caxis([0 cmax])
-        axis(15000*[-1 1 -1 1])
+        axis(Lim*[-1 1 -1 1])
         title('NO^+ ions')
         
         subplot(2,2,3)
@@ -185,9 +204,9 @@ if purpose=='geo'
         cmap=colormap;
         set(gca,'Color',cmap(1,:))
     %    caxis([0 cmax])
-        caxis
+        caxis;
         ylabel('relative density')
-        axis(10000*[-1 1 -1 1]) 
+        axis(Lim*[-1 1 -1 1]) 
         title('NO^{**} long-lived Rydberg')
         xlabel('r/um')
         
@@ -199,11 +218,13 @@ if purpose=='geo'
         set(gca,'Color',cmap(1,:))
         %caxis([0 cmax])
         ylabel('relative density')
-        axis(15000*[-1 1 -1 1]) 
+        axis(Lim*[-1 1 -1 1]) 
         title('NO^{**} and NO^+')        
         xlabel('r/um')
         
-        if save
+        sgtitle(sprintf('t=%.0f ns',T)) 
+        
+        if tosave
             frame=getframe(gcf);
             writeVideo(v,frame); 
         else
@@ -211,8 +232,9 @@ if purpose=='geo'
         end
     end    
 
-    if save
-    close(v)
+    if tosave
+      close(v)
+      %saveas(gcf,[path '-2D'],'png')
     end
 end
 

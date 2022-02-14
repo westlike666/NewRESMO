@@ -115,9 +115,9 @@ for i=[1:length(tspan)]
     ylabel('relative density')
     axis(2500*[-1 1 -1 1]) 
     title('NO^{**} and NO^+')    
-    
     xlabel('r/ \sigma_0')
     
+
     if save
         frame=getframe(gcf);
         writeVideo(v,frame); 
