@@ -1,5 +1,5 @@
 
-function [t,rs, edens, n_ions, n_highs, nDens,Ts, Tn, r0, tau, ns]=complete1D(N,k,dp,n0,all_pqn,sigma,env,tspan,gamma1,gamma2, phi, d_phi)
+function [t,rs, edens, n_ions, n_highs, nDens,Ts, Tn, r0, tau, ns]=complete1D(N,k,dp,n0,purpose,all_pqn,sigma,env,tspan,gamma1,gamma2, phi, d_phi)
 
 %% define initial constant
 kB = 1.3806504e-23;                 % #m2 kg s-2 K-1;J K-1; 8.62e-5 #eV K-1,
@@ -117,14 +117,21 @@ dU=0*dU;
 %from 0 to r and d_theta from 0 to 2*pi to find total volume at r(theta),
 %the diff calculate the volume of slices betwenn shell boundaries
 
-V=2*pi/3*d_phi*(diff(r.^3)); % N*1 colume volume of each shell
 
-if all_pqn
-    dV=2*pi*d_phi*(diff(r.^2.*U)); 
-else
-    dV=2*pi*d_phi*(diff(r.^2.*U)); 
- %   dV=0;
+V=2*pi/3*d_phi*(diff(r.^3)); % N*1 colume volume of each shell, expand volume to 3D
+
+
+if purpose=='soc' 
+    dV=2*pi*d_phi*(diff(r.^2.*U));
+
+elseif purpose=='geo' 
+%    V=diff(r);
+%    dV=diff(U);
+    dV=0;  % This is to aviod the artefact of bifurcation in images 
 end
+
+
+
 
 k_ion=kION(nl,T); % 1* ns row.   ionization
 k_tbr=kTBR(nl,T); % 1* ns row.   three body recombination

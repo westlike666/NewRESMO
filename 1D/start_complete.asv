@@ -29,16 +29,16 @@ elseif purpose=='geo'
     % The collapse of pqn will not contain the n to n' decay that usually act as a heating process. Thus the temperature  
 end 
 
-N=100 % number of shells 
+N=50 % number of shells 
 
 
-n0=80; % initial principal quanutm number  
+n0=50; % initial principal quanutm number  
 dp=0.04;  %   peak density in um^-3 or 1e12 cm^-3
 gamma1=0.01; % This is the magnitude of charge transfer rate: k_CT=gamma1.*dr.*(a0*n.^2); The dimesion is arbitary
 
-tosave=true % whether so save data and images. Set to be true for long simulation (t>2000 ns)
+tosave=1 % whether so save data and images. Set to be true for long simulation (t>2000 ns)
 
-t_final=10000;  % evolution time in ns 
+t_final=20000;  % evolution time in ns 
 dt=100; % steps of time to demonstrate. This does not affect the ode calculation procedure.
 
 %% parameters that are suggested to be fixed 
@@ -68,6 +68,11 @@ env=5;  % sigma environment of density distribution
 
 filename=['n0=' num2str(n0) ' den=' num2str(dp)  ' N=' num2str(N) ' t=' num2str(t_final) 'ns' ' gamma1=' num2str(gamma1) ];
 filename=replace(filename, '.', 'p');
+
+if not(isfolder('results'))
+    mkdir results
+end
+
 path=[ 'results/' filename]
 
 tot_angle=2*pi; % the ploar angle run from 0 to pi/2*pi, meaning the results representing the upper hemisphere/ shpere
@@ -87,7 +92,7 @@ NDens=zeros(length(tspan),N,M);
 for m=[1:M]
     sigma=R(m);
     phi=Phi(m);
-    [t,rs, edens, n_ions, n_highs, nDens, Ts, Tn, r0, tau, ns]=complete1D(N,k,dp,n0,all_pqn,sigma,env,tspan,gamma1,gamma2, phi, d_phi);
+    [t,rs, edens, n_ions, n_highs, nDens, Ts, Tn, r0, tau, ns]=complete1D(N,k,dp,n0,purpose,all_pqn,sigma,env,tspan,gamma1,gamma2, phi, d_phi);
     [x,y] = pol2cart(Phi(m),rs(:,1:end-1));
     X(:,:,m)=x;
     Y(:,:,m)=y;
@@ -111,7 +116,7 @@ t=t/1000; % converting time from ns to um
      Vs=2*pi/3*d_phi*(diff(Rs.^3,1,2)); 
  elseif purpose=='geo'
      %Vs=1; 
-     Vs=2*pi/3*d_phi*(diff(Rs.^3,1,2)); 
+     Vs=2*pi/3*d_phi*(diff(Rs(1,:,:).^3,1,2)); % asumming a constant volume to avoid artifect
  end
  
  
@@ -121,7 +126,7 @@ t=t/1000; % converting time from ns to um
  
 figure()
 
-       sgtitle(sprintf('t=%.0f ns',T)) 
+sgtitle(['n0=' num2str(n0) ' den0=' num2str(dp)]) 
 subplot(2,2,1)
 plot(t,tot_ions,t,tot_highs,t,tot_nDens)
 legend('NO^+ ', 'NO^{**}', 'NO^*')
@@ -150,7 +155,9 @@ xlabel('us')
 
 if tosave
     save(path,'tot_ions','tot_nDens','tot_highs','t','rs')
-    saveas(gcf,path,'fig')
+    if purpose=='soc'
+        saveas(gcf,path,'fig')
+    end
 end
 
 %% Plotting 2D results
@@ -176,6 +183,7 @@ if M>1
     %     nn_ions=reshape(N_ions(i,:,:).*Vs(i,:,:),N,M);
     %     nn_highs=reshape(N_highs(i,:,:).*Vs(i,:,:)/8,N,M);
     %     nnDens=reshape(NDens(i,:,:).*Vs(1,:,:),N,M);
+    %     Do not plot total number, it will cause artefact 
         Lim=3000;
         subplot(2,2,1)
     %    colormap winter
@@ -221,7 +229,11 @@ if M>1
         axis(Lim*[-1 1 -1 1]) 
         title('NO^{**} and NO^+')        
         xlabel('r/um')
-        
+%         
+%         clf
+%         h=pcolor(xx,yy,nn_ions);
+%         axis(Lim*[-1 1 -1 1]) 
+
         sgtitle(sprintf('t=%.0f ns',T)) 
         
         if tosave
