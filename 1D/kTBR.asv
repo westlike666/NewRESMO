@@ -13,7 +13,6 @@ function ktbr=kTBR(n,T)     % three-body-recombination
     ktbr(isnan(ktbr))=0;       % take care of computation error for values matlab sees too small and turns NaN
     ktbr(~isfinite(ktbr))=0;    % take care of computation error for values matlab sees too large and turns inf
 
-    %There is a electron density term missing. In the rate equation,
-    %should write eden^4 insead of eden^3.
+    %There is a 
 
 end

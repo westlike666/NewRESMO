@@ -15,7 +15,7 @@ a0=5.2917721092e-5;     % bohr radius in um
 
 sigma_z=sigma;  % Gaussian width convert from mm to um.
 
-T_e=5; T_i=0;   % K
+T_e=20; T_i=0;   % K
 
 tau=(1/kBm*sigma^2/(T_e+T_i))^0.5;  % ns  let sigma_0 equals to 1000um 
 
@@ -62,15 +62,21 @@ n_high=0*n_ion; % long-lived NO^**
 
 expand=all_pqn;  % expand the NO^* Rydberg into different levels 
 if expand
+     n_min=10;
+     n_max=80;
      f=@(x)5.95*x.^5;                % This is the penning fraction distribution
-     np=10:fix(n0/sqrt(2));      % Array of n states allowed after Penn ion
+     np=n_min:fix(n0/sqrt(2));      % Array of n states allowed after Penn ion
      ind=1:length(np); 
-     nl=[10:80];
+     nl=[n_min:n_max];
      ns=length(nl);
      n_dist=0*nl;
      n_dist(ind)=f(np/n0)/sum(f(np/n0));% dividing by the sum normalizes the function
      nDen=n_dist'*eden;
      nDen(nl==n0,:)=n_Ryd;
+     %T_penning=(-Ry*den0./n0^2 + Ry*n_Ryd./n0^2 + Ry*sum(nDen(ind,:)./(nl(ind).^2)',1))./(3/2*kB.*eden); % by energy conservation, initial before penning is zero 
+     T_penning=sum(-Ry*den0./n0^2 + Ry*n_Ryd./n0^2 + Ry*sum(nDen(ind,:)./(nl(ind).^2)',1))./sum(3/2*kB.*eden); % by energy conservation, initial before penning is zero 
+
+     %T_e=T_penning % initial temperature. comment if wish to use preset Temperature.
 else
      nl=n0;
      ns=1;
@@ -147,7 +153,7 @@ k_DR=kDR(T); % scaler.  dissociative recombination
 % k_CT=gamma1*k_tbr.^(1/2).*u;  %  N*ns matrix. charge transfer rate: larger speed (r) causes more charge transfer within that shell at given amount of time;
 % k_CT2=gamma2*max(k_tbr).^(1/2).*u; % N*1 colume, since NO^** is not distinguished by pqn 
 
-k_CT=gamma1.*diff(r).*(a0*nl.^2);  %  N*ns matrix. charge transfer rate: larger speed (r) causes more charge transfer within that shell at given amount of time;
+k_CT=gamma1.*diff(r).*(a0*nl.^2)/T;  %  N*ns matrix. charge transfer rate: larger speed (r) causes more charge transfer within that shell at given amount of time;
 k_CT2=gamma2.*diff(r).*(a0.^2); % N*1 colume, since NO^** is not distinguished by pqn 
 
 %  k_CT=gamma1;
@@ -172,7 +178,7 @@ step=sum(t>=Tn)+1;
 d_ionize=k_ion.*eden.*[nDen(:,step:end),zeros(ns,step-1)]'; % N*ns matrix: the outer (step) shells are zero
 % d_ionize(1:end-step+1,:) is the overlapping (non-zero) region
 
-d_tbr=k_tbr.*eden.^3; % N*1 colume
+d_tbr=k_tbr.*eden.^4; % N*1 colume. one eden power is aborbed in k_tbr 
 % d_tbr(1:end-step+1,:) is the overlapping (non-zero) region
 
 d_n_np=sum(k_n_np,2).*nDen.*[zeros(1,step-1),eden(1:end-step+1)']; % ns*N matrix

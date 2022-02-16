@@ -18,7 +18,7 @@ for density=[0.01]   % in unit um^-3, which is 10^12*cm^-3
 %     sigma_y=0.55*1000;
 %     sigma_x=0.70*1000;
 
-    n=80; %PQN
+    n=90; %PQN
     
    
     d_p=density; %peak density in um-3
@@ -40,7 +40,7 @@ for density=[0.01]   % in unit um^-3, which is 10^12*cm^-3
         num2str(sigma_y/1000),'mm',num2str(sigma_z/1000),'mm', '_tfinal',num2str(t_max),'ns_',num2str(sigma_env),'sigmaenv', '_fixvolume=', num2str(single)];
     
     %solve rate equations
-    [time,nden,eden,deac_n_min,deac_dr,deac_pd,Te,rx,ry,rz,vx,vy,vz,vol,y0]=shell_rate_eqn_sim_soc(d, pos_x, pos_y, pos_z, n, t_max, single, vectorize);
+    [time,nden,eden,deac_n_min,deac_dr,deac_pd,Te,rx,ry,rz,vx,vy,vz,vol,y0]=shell_rate_eqn_sim(d, pos_x, pos_y, pos_z, n, t_max, single, vectorize);
     
     %reduce file size by deleting shell specific information
     eden=EDEN(eden,vol);

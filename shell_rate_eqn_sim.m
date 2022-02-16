@@ -128,7 +128,7 @@ end
  
 
 %the penning temperature is equal for all densities! (density scaling factor cancels)
-T_penning = sum(T_PENNING.*(volume').*den0)/sum((volume').*den0); %calculate equlibrated penning temperature by weigted average
+T_penning = sum(T_PENNING.*(volume').*den0)/sum((volume').*den0) %calculate equlibrated penning temperature by weigted average
 
 T_penning=5;
 
