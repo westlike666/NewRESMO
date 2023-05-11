@@ -15,7 +15,7 @@ a0=5.2917721092e-5;     % bohr radius in um
 
 sigma_z=sigma;  % Gaussian width convert from mm to um.
 
-T_e=20; T_i=0;   % K
+T_e=50; T_i=0;   % K
 
 tau=(1/kBm*sigma^2/(T_e+T_i))^0.5;  % ns  let sigma_0 equals to 1000um 
 
@@ -76,7 +76,7 @@ if expand
      %T_penning=(-Ry*den0./n0^2 + Ry*n_Ryd./n0^2 + Ry*sum(nDen(ind,:)./(nl(ind).^2)',1))./(3/2*kB.*eden); % by energy conservation, initial before penning is zero 
      T_penning=sum(-Ry*den0./n0^2 + Ry*n_Ryd./n0^2 + Ry*sum(nDen(ind,:)./(nl(ind).^2)',1))./sum(3/2*kB.*eden); % by energy conservation, initial before penning is zero 
 
-     %T_e=T_penning % initial temperature. comment if wish to use preset Temperature.
+     T_e=T_penning % initial temperature. comment if wish to use preset Temperature.
 else
      nl=n0;
      ns=1;
@@ -153,11 +153,14 @@ k_DR=kDR(T); % scaler.  dissociative recombination
 % k_CT=gamma1*k_tbr.^(1/2).*u;  %  N*ns matrix. charge transfer rate: larger speed (r) causes more charge transfer within that shell at given amount of time;
 % k_CT2=gamma2*max(k_tbr).^(1/2).*u; % N*1 colume, since NO^** is not distinguished by pqn 
 
-k_CT=gamma1.*diff(r).*(a0*nl.^2)/T;  %  N*ns matrix. charge transfer rate: larger speed (r) causes more charge transfer within that shell at given amount of time;
-k_CT2=gamma2.*diff(r).*(a0.^2); % N*1 colume, since NO^** is not distinguished by pqn 
+% k_CT=gamma1.*diff(r).*(a0*nl.^2)/T;  %  N*ns matrix. charge transfer rate: larger speed (r) causes more charge transfer within that shell at given amount of time;
+% k_CT2=gamma2.*diff(r).*(a0.^2); % N*1 colume, since NO^** is not distinguished by pqn 
 
-%  k_CT=gamma1;
-%  k_CT2=gamma2;
+k_CT=1e5*gamma1.*u.*(a0*nl.^2)/T;  %  N*ns matrix. charge transfer rate: larger speed (r) causes more charge transfer within that shell at given amount of time;
+k_CT2=1e4*gamma2.*u.*(a0.^2); % N*1 colume, since NO^** is not distinguished by pqn 
+
+ k_CT=t/(t^2+tau^2)*1e-5*gamma1.*rr;
+ k_CT2=1e-5*gamma2.*rr;
 %%
 
 

@@ -13,7 +13,7 @@ clc
 % and showing 2D bifurcation images 
 
 %purpose='soc';
-purpose='soc'
+purpose='geo'
 
 if purpose=='soc'
     all_pqn=true;  M=1;
@@ -32,14 +32,14 @@ end
 N=50 % number of shells 
 
 
-n0=50; % initial principal quanutm number  
-dp=0.1;  %   peak density in um^-3 or 1e12 cm^-3
-gamma1=0.1; % This is the magnitude of charge transfer rate: k_CT=gamma1.*dr.*(a0*n.^2); The dimesion is arbitary
+n0=80; % initial principal quanutm number  
+dp=0.01;  %   peak density in um^-3 or 1e12 cm^-3
+gamma1=2; % This is the magnitude of charge transfer rate: k_CT=gamma1.*dr.*(a0*n.^2); The dimesion is arbitary
 
 tosave=0 % whether so save data and images. Set to be true for long simulation (t>2000 ns)
 
-t_final=2000;  % evolution time in ns 
-dt=10; % steps of time to demonstrate. This does not affect the ode calculation procedure.
+t_final=200;  % evolution time in ns 
+dt=1; % steps of time to demonstrate. This does not affect the ode calculation procedure.
 
 %% parameters that are suggested to be fixed 
 
